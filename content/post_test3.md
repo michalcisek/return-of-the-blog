@@ -1,6 +1,6 @@
 ---
 date: '2025-06-19T15:20:53+02:00'
-draft: true
+draft: false
 title: 'Post_test3'
 ---
 
