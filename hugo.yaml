@@ -1,6 +1,6 @@
 baseURL: https://michalcisek.github.io/
 languageCode: en-us
-title: My New Hugo Site
+title: "Michał Cisek"
 theme: ["PaperMod"]
 
 
@@ -10,8 +10,8 @@ params:
     Content: Can be Info, links, about...
 
   socialIcons: # optional
-    - name: "<platform>"
-      url: "<link>"
+    - name: linkedin
+      url: https://www.linkedin.com/in/michal-cisek/
     - name: "<platform 2>"
       url: "<link2>"
 
