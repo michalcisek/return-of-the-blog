@@ -1,10 +1,14 @@
 baseURL: https://michalcisek.github.io/
 languageCode: en-us
 title: "Michał Cisek"
-theme: ["PaperMod"]
-
+theme: ["hugo-admonitions", "PaperMod"]
+enableEmoji: true
 
 params:
+  ShowReadingTime: true
+  ShowCodeCopyButtons: true
+  ShowBreadCrumbs: true
+  ShowShareButtons: false
   homeInfoParams:
     Title: Hi there wave
     Content: Can be Info, links, about...
@@ -18,3 +22,12 @@ params:
 caches:
   images:
     dir: :cacheDir/images
+
+markup:
+  markup.goldmark:
+    markup.goldmark.renderer:
+      unsafe: true
+
+module:
+  imports:
+    - path: github.com/KKKZOZ/hugo-admonitions
