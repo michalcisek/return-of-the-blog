@@ -4,20 +4,54 @@ title: "Michał Cisek"
 theme: ["hugo-admonitions", "PaperMod"]
 enableEmoji: true
 
+
+languages:
+  en:
+    languageName: "English"
+    weight: 1
+    taxonomies:
+      category: categories
+      tag: tags
+      series: series
+    menu:
+      main:
+        - name: Archive
+          url: archives
+          weight: 5
+
 params:
   ShowReadingTime: true
   ShowCodeCopyButtons: true
   ShowBreadCrumbs: true
   ShowShareButtons: false
-  homeInfoParams:
-    Title: Hi there wave
-    Content: Can be Info, links, about...
+  ShowAllPagesInArchive: true
+  ShowPageNums: true
+  ShowRssButtonInSectionTermList: false
 
-  socialIcons: # optional
+  homeInfoParams:
+    Title: Messy thoughts dressed up with data
+    Content: |
+      Welcome to my personal blog! 👋 
+      
+      Few words about me: Professionally I solve interesting problems using data, statistics and technologies.
+      
+      - 
+
+      From time to time some intriguing thoughts or ideas come to my mind, that I try to explore in my free time. 
+
+      - 
+
+      Here I want to share them with you, hoping they might inspire you for something on your own (and also in hope to motivate myself to finish them).
+      
+    buttons:
+      - name: Archives
+        url: archives
+      - name: Tags
+        url: tags
+
+  socialIcons:
     - name: linkedin
       url: https://www.linkedin.com/in/michal-cisek/
-    - name: "<platform 2>"
-      url: "<link2>"
 
 caches:
   images:
