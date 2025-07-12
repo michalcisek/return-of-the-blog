@@ -12,7 +12,7 @@ cover:
 
 *Imagine a hot, summer day. You’re sitting at home, feeling the stuffy air. You start to wonder whether today is going to be a stormy day.*
 
-*You could check your favourite website to see on the map where the lightning bolts are."*
+*You could check your favourite website to see on the map where the lightning bolts are.*
 
 *But no — instead, you want to know how far away the most recent lightning strike was. And you want to know it precisely, instantly, and without lifting a finger.*
 
