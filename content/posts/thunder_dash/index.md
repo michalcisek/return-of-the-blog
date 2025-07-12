@@ -206,7 +206,7 @@ And the final effect is as follows. Below you can check the screenshot of the ap
 
 And this is how it presents on my desk:
 
-{{< figure src="desk2_1.jpg" align=center caption="how it present on my desk? I'd say pretty decent">}}
+{{< figure src="desk2_1.jpg" align=center caption="how does it present on my desk? I'd say pretty decent">}}
 
 It's been working for about 2 months now. I compare the results from time to time with the original map and it seems to be working perfectly.
 
