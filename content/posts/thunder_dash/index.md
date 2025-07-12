@@ -10,11 +10,11 @@ cover:
   relative: true # To use relative path for cover image, used in hugo Page-bundles
 ---
 
-*Imagine a hot, summer day. You are sitting in your home, feeling this stuffy air. You start to wonder whether it's gonna be today a stormy day.*
+*Imagine a hot, summer day. You’re sitting at home, feeling the stuffy air. You start to wonder whether today is going to be a stormy day.*
 
 *You could check on your favourite website where the lightning bolts are located and how far from you.*
 
-*But no, instead, you want to know how far the closest lightning bolt recently stroke. And you want to know it precisely, immediately and without moving your finger.*
+*But no — instead, you want to know how far away the most recent lightning strike was. And you want to know it precisely, immediately and without moving your finger.*
 
 *Sounds like a realistic scenario, right? Right?*
 
@@ -28,23 +28,23 @@ Still, as with many of my side-project ideas, I didn’t have time to pursue thi
 
 # An easy, but expensive way
 
-Obviously, the easiest idea would be to access some API that return data about recent lightnings with geolocation and use such response to get the closest distance to your location. And then display this information on some kind of dashboard.
+Obviously, the easiest idea would be to access some API that returns data about recent lightnings with geolocation and use such response to get the closest distance to your location. And then display this information on some kind of dashboard.
 
-Such services do exist but are not free (actually they are damn expensive, but I imagine having accurate weather data might be desirable for many industries). Anyway, to get the glimpse of the data, I used free trial of Meteomatics API, that grants access to such data. You simply define the parameters of the query:
-bounding box that you want to search lightnings within and time period. As the result you get something like this:
+Such services do exist but are not free (actually they are damn expensive, but I imagine having accurate weather data might be desirable for many industries). Anyway, to get a glimpse of the data, I used free trial of Meteomatics API, that grants access to such data. You simply define the parameters of the query:
+bounding box within which you want to search for lightning strikes and time period. As the result you get something like this:
 
 ```json
 [{"stroke_time:sql":"2024-09-01T17:45:20Z","stroke_lat:d":"38.845","stroke_lon:d":"-80.8603","stroke_current:kA":"-18.2","lightning_type":"2"},
 {"stroke_time:sql":"2024-09-01T17:45:33Z","stroke_lat:d":"35.7407","stroke_lon:d":"-86.8738","stroke_current:kA":"21.7","lightning_type":"2"}]}]
 ```
 
-From this point it’s piece of cake to get what I wanted.
+From this point it’s a piece of cake to get what I wanted.
 
 # A hard, but fun way
 
 But, for such pet project I don’t want to pay a shitload of money for data. So what are the alternatives? Well, I think a lot of people know blitzortung.org website. They display lightning map in real time. 
 
-They also provide access to API, but unfortunately it's only available for members of their communit, i.e. people who are part of lightning detectors network. To be such member, you need to posess specific hardware, which is currently unavailable to buy (at least that was some time ago when I requested access to such hardware).
+They also provide access to API, but unfortunately it's only available for members of their community, i.e. people who are part of lightning detectors network. To be such member, you need to possess specific hardware, which is currently unavailable to buy (at least that was some time ago when I requested access to such hardware).
 
 > [!TIP]- More for curious reader
 > If you are familiar with web scraping, you could easily find out how the website retrieves the data in real time about recent lightnings. They use WebSocket communication protocol, and it outputs data like this:
@@ -53,7 +53,7 @@ They also provide access to API, but unfortunately it's only available for membe
 >
 > As it can be seen, there are definitely information about timestamp, longitude and latitude, but they are obfuscated. They obviously don't want you to steal their data.
 > 
-> So even if you would be able to access the web socket, you would still need to decode this data.
+> So even if you could access the WebSocket, you would still need to decode this data.
 > I guarantee you it's possible, but that's misuse of their API, so I'm not going to do it this way.
 
 
@@ -118,7 +118,7 @@ Now you just need to select a threshold above which you state that the pixel is 
 
 {{< figure src="output3.png" align=center caption="map with white pixels selected">}}
 
-At this stage, again, you could reach the goal in many ways. I choose the most trivial one. In order to detect white cross you simply iterate over all pixels. For each pixel you check its neighbours - pixel on the left, right, below and above. If all of them are 1 (meaning they are white) - you got a pixel representing a lightning!
+At this stage, again, you could reach the goal in many ways. I chose the most trivial one. In order to detect white cross you simply iterate over all pixels. For each pixel you check its neighbours - pixel on the left, right, below and above. If all of them are 1 (meaning they are white) - you got a pixel representing a lightning!
 
 > [!TIP]- More for curious reader
 > You probably see that not only crosses were extracted but also some additional information provided by the website, visible in top-left, top-right and bottom-right corners. Those data would generate fake lightnings that we don't want to detect.
@@ -130,14 +130,14 @@ At this stage, again, you could reach the goal in many ways. I choose the most t
 
 So we have pixel coordinates corresponding to the lightnings. We wish to transform them to geo coordinates.
 
-If you would be really really lazy, and you would know the coordinates of map corners (left top, bottom, right top, bottom) you could THEORETICALLY assume that each pixel represent constant distance, and based on that translate pixel position to geo location. 
+If you would be really really lazy, and you would know the coordinates of map corners (left top, bottom, right top, bottom) you could THEORETICALLY assume that each pixel represents a constant distance, and based on that translate pixel position to geo location. 
 
 This is of course huge oversimplification, but hey, you could do it, and the results for such map as ours wouldn’t be that much imprecise. At this stage I didn’t know the coordinates of map corners. But you can always compare our map to google maps to determine approximate locations of four corners. I did this exercise so you don’t have to. It worked, but the results compared to official data source (Meteomatics API that I mentioned earlier) were off even by several dozen kilometers.
 
 That is of course not “good enough” for such important project as this one. The most problematic issue is that we don’t know how to translate pixel to geo coordinates. Basically we don’t know what map projection was used. If you paid attention to geography classes you probably could guess or estimate which projection was used (there is not that many frequently used). I’m actually in the group of people who paid attention to geography classes, because I took secondary school-leaving examination in geography (and passed it with decent score!).
 But this knowledge is long forgotten.
 
-Fortunately, there is a phrase: "if you torture the data long enough, it will confess to anything". I know it's used mostly in a negative way, but fits the situation pretty well. 
+Fortunately, there is a phrase: "if you torture the data long enough, it will confess to anything". I know it's used mostly in a negative way (to describe bad statistical practice), but fits the situation pretty well. 
 My thinking was that the logic for this pixel->geo coordinates transformation should be somewhere incorporated on the website. When I first went through the website origin, I didn’t find such piece of code. But then I digged more and also checked attached JavaScript files. And there I found gold! 
 
 It turns out that there were the definitions of each map available on the website, with map projections used for each of them. Plus, I found the definitions of the functions that do the transformation: they take as input longitude and latitude and transform them to pixel coordinates, depending on the map projection.
@@ -177,23 +177,23 @@ def pixel_to_lat(y, west, east, north, height):
 
 We are all set now. 
 
-All we need to do is calculate distance between two points: your location and closest lightning bolt. To achieve it we can use Haversine formula. I’ll not try to outsmart you here - formula is formula, you can read more about how it works, but all that matters is that you pass two points (point defined as longitude and latitude) and get the distance as output. So you simply calculate this formula between your location and all the lightning bolts you discovered, get the minimum value, and v’oilla - you get your distance to closest lightning bolt.
+All we need to do is calculate distance between two points: your location and closest lightning bolt. To achieve it we can use Haversine formula. I’ll not try to outsmart you here - formula is formula, you can read more about how it works, but all that matters is that you pass two points (point defined as longitude and latitude) and get the distance as output. So you simply calculate this formula between your location and all the lightning bolts you discovered, get the minimum value, and voilà - you get your distance to closest lightning bolt.
 
 
 Cool, all the tricky (from my perspective) work is done. Now we can get the toys out and have some fun.
 
 # Connecting all the dots
 
-As mentioned at the beginning of article: we want to have all the processes automated to present visually fresh data about closest lightning bolt. You can achieve it in many ways. I’m gonna do it based on some hardware I bought few years ago and tools that are popular and easy to configure.
+As mentioned at the beginning of article: we want to have all the processes automated to present visually fresh data about closest lightning bolt. You can achieve it in many ways. I’m going to do it using hardware I bought a few years ago and tools that are popular and easy to configure.
 
 Unlike preprocessing the data that I described above, which is pretty unstandard, I’m not gonna delve into the details here - you can find numerous articles about tools I’m gonna mention.
 
 So, the plan is as follows:
-- configure `cronjob` that cyclically, e.g. every 5 minutes runs the script that retrieves the data about recent lightning bolts and store it in `SQLite` database. I'm going to run it on a mini-cluster consisting of 3 Raspberry Pi Zero that I use for some of my pet projects
+- configure `cronjob` that cyclically, e.g. every 5 minutes runs the script that retrieves the data about recent lightning bolts and store it in `SQLite` database. I'm going to run it on a mini-cluster consisting of three Raspberry Pi Zeros that I use for some of my pet projects
 - create an endpoint in `FastAPI` that retrieves from `SQLite` database details about most recent lightning bolts. Run `uvicorn` server to host this endpoint
 - generate beautiful image in ChatGPT displaying city during a storm and use it in simple HTML dashboard that will display data about closest lightning bolt
 - run the dashboard on a server
-- prepare hardware for displaying dashboard. I’ve got an old Raspberry Pi 3B that I bought some time ago with 3.5 inch display. After connecting raspberry with display, installing and configuring OS, you can simply run a browser, with address set to the dashboard hosted on a server, in a kiosk mode
+- prepare hardware for displaying dashboard. I’ve got an old Raspberry Pi 3B that I bought some time ago with 3.5 inch display. After connecting Raspberry Pi with the display, installing and configuring OS, you can simply run a browser, with address set to the dashboard hosted on a server, in a kiosk mode
 
 Visually, we end up with an architecture like this:
 
