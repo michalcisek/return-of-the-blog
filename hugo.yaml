@@ -3,6 +3,7 @@ languageCode: en-us
 title: "Michał Cisek"
 theme: ["hugo-admonitions", "PaperMod"]
 enableEmoji: true
+googleAnalytics: "GTM-KC63VXMQ"
 
 languages:
   en:
