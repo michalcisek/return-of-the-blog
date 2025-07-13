@@ -1,5 +1,5 @@
 ---
-date: '2025-06-14T08:00:54+02:00'
+date: '2025-07-12T08:00:54+02:00'
 draft: false
 title: 'How far away is the nearest lightning bolt?'
 ShowToc: false
