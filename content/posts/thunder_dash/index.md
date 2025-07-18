@@ -3,8 +3,10 @@ date: '2025-07-12T08:00:54+02:00'
 draft: false
 title: 'How far away is the nearest lightning bolt?'
 ShowToc: false
+ShowReadingTime: true
+ShowBreadCrumbs: false
 cover:
-  image: "cover1.png"
+  image: "cover3.png"
   #alt: "<alt text>"
   #caption: "Captiooon"
   relative: true # To use relative path for cover image, used in hugo Page-bundles
