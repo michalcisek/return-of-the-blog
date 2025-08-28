@@ -15,36 +15,34 @@ languages:
       series: series
     menu:
       main:
-        - name: Archive
+        - name: archive
           url: archives
           weight: 5
+          identifier: archives
+        - name: about
+          url: about
+          weight: 1
+          identifier: about
 params:
   env: production
   analytics:
     google:
       ID: G-YFDSS2HG0B
-  ShowReadingTime: true
+  ShowReadingTime: false
   ShowCodeCopyButtons: true
-  ShowBreadCrumbs: true
+  ShowBreadCrumbs: false
   ShowShareButtons: false
   ShowAllPagesInArchive: true
   ShowPageNums: true
   ShowRssButtonInSectionTermList: false
+  assets:
+    customCSS:
+      - css/custom.css
 
   homeInfoParams:
     Title: Messy thoughts dressed up with data
     Content: |
-      Welcome to my personal blog! 👋 
-      
-      A few words about me: Professionally, I solve interesting problems using data, statistics, and technologies.
-      
-      - 
-
-      From time to time, intriguing (and sometimes weird) ideas, thoughts, or curious questions pop into my head — and I like to explore them in my free time.
-
-      - 
-
-      This blog is where I share those explorations, hoping they might inspire something of your own — and maybe also help motivate me to finish them.
+      Project notes and miscellanea. 
       
     buttons:
       - name: Archives
