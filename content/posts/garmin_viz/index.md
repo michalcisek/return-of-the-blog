@@ -6,7 +6,7 @@ ShowToc: false
 ShowReadingTime: true
 ShowBreadCrumbs: false
 cover:
-  image: "cover1.webp"
+  image: "cover2.webp"
   #alt: "<alt text>"
   #caption: "Captiooon"
   relative: true # To use relative path for cover image, used in hugo Page-bundles
