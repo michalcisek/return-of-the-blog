@@ -5,6 +5,7 @@ theme: ["hugo-admonitions", "PaperMod"]
 enableEmoji: true
 googleAnalytics: G-YFDSS2HG0B
 
+
 languages:
   en:
     languageName: "English"
@@ -25,6 +26,8 @@ languages:
           identifier: about
 params:
   env: production
+  defaultTheme: light
+  disableThemeToggle: false
   analytics:
     google:
       ID: G-YFDSS2HG0B
@@ -34,15 +37,17 @@ params:
   ShowShareButtons: false
   ShowAllPagesInArchive: true
   ShowPageNums: true
-  ShowRssButtonInSectionTermList: false
-  assets:
-    customCSS:
-      - css/custom.css
+  ShowRssButtonInSectionTermList: true
+
+  outputs:
+    home:
+    - html
+    - rss
+    - json
 
   homeInfoParams:
     Title: Messy thoughts dressed up with data
-    Content: |
-      Project notes and miscellanea. 
+    Content: Welcome to my personal blog! Check out latest posts and [about](about) page.
       
     buttons:
       - name: Archives
@@ -53,14 +58,18 @@ params:
   socialIcons:
     - name: linkedin
       url: https://www.linkedin.com/in/michal-cisek/
+    - name: rss
+      url: index.xml
 
 caches:
   images:
     dir: :cacheDir/images
 
 markup:
-  markup.goldmark:
-    markup.goldmark.renderer:
+  highlight:
+    noClasses: false
+  goldmark:
+    renderer:
       unsafe: true
 
 module:
