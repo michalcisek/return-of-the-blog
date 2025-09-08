@@ -36,8 +36,22 @@ Such services do exist but are not free (actually they are damn expensive, but I
 bounding box within which you want to search for lightning strikes and time period. As the result you get something like this:
 
 ```json
-[{"stroke_time:sql":"2024-09-01T17:45:20Z","stroke_lat:d":"38.845","stroke_lon:d":"-80.8603","stroke_current:kA":"-18.2","lightning_type":"2"},
-{"stroke_time:sql":"2024-09-01T17:45:33Z","stroke_lat:d":"35.7407","stroke_lon:d":"-86.8738","stroke_current:kA":"21.7","lightning_type":"2"}]}]
+[
+    {
+        "stroke_time:sql":"2024-09-01T17:45:20Z",
+        "stroke_lat:d":"38.845",
+        "stroke_lon:d":"-80.8603",
+        "stroke_current:kA":"-18.2",
+        "lightning_type":"2"
+    },
+    {
+        "stroke_time:sql":"2024-09-01T17:45:33Z",
+        "stroke_lat:d":"35.7407",
+        "stroke_lon:d":"-86.8738",
+        "stroke_current:kA":"21.7",
+        "lightning_type":"2"
+    }
+]
 ```
 
 From this point it’s a piece of cake to get what I wanted.
@@ -104,7 +118,7 @@ First what you need to do is to load the map in Python. You can achieve that usi
 
 You end up with 3D matrix, that is `width` x `height` x `channels` size. Most frequently the number of channels will be 3, each one corresponding to intensity of blue, green and red color.
 
-{{< figure src="output1.png" align=center caption="raw map loaded in Python">}}
+{{< centered-image src="output1.png" alt="image" maxWidth="600px" description="Figure 1: raw map loaded in Python ">}}
 
 As it can be seen, we have 6 colors of crosses, on white-to-red scale (white being the most recent, red being the oldest ones). We want to retrieve only the white ones.
 
@@ -114,11 +128,11 @@ I knew that for this map the lightning cross is 7x7 pixels. So potentially you c
 
 Fortunately there is a better way to achieve it. First, we can simplify the image. Instead of having 3 channels, let’s have one. That would help us to select the color threshold to pick white crosses. In order to do this we can transform the image from RGB scale to grayscale (black-and-white). As you can see below, now the image is easier to work with. Each pixel is encoded as value from 0 to 255. The higher, the more white pixel is.
 
-{{< figure src="output2.png" align=center caption="map after transforming to grayscale">}}
+{{< centered-image src="output2.png" alt="image" maxWidth="600px" description="Figure 2: map after transforming to grayscale ">}}
 
 Now you just need to select a threshold above which you state that the pixel is “white enough” (:D) to represent a cross. If you'd check image values, it turns out that the threshold should be 240. So again, we transform image, this time to binary form. The pixel value can be either 0 (non-white) or 1 (white).
 
-{{< figure src="output3.png" align=center caption="map with white pixels selected">}}
+{{< centered-image src="output3.png" alt="image" maxWidth="600px" description="Figure 3: map with white pixels selected ">}}
 
 At this stage, again, you could reach the goal in many ways. I chose the most trivial one. In order to detect white cross you simply iterate over all pixels. For each pixel you check its neighbours - pixel on the left, right, below and above. If all of them are 1 (meaning they are white) - you got a pixel representing a lightning!
 
@@ -199,16 +213,15 @@ So, the plan is as follows:
 
 Visually, we end up with an architecture like this:
 
-{{< figure src="diagram4.png" align=center caption="architecture of our solution">}}
+{{< centered-image src="diagram4.png" alt="image" maxWidth="600px" description="Figure 4: architecture of our solution ">}}
 
 And the final effect is as follows. Below you can check the screenshot of the app looks like. Apart from the distance to closest lightning bolt, I also show its coordinates, total number of lightnings on map and datetime when the data was retrieved.
 
-<!-- ![Alt text](dashboard1.png#center) -->
-{{< figure src="dashboard1.png" align=center caption="screenshot from the app">}}
+{{< centered-image src="dashboard1.png" alt="image" maxWidth="600px" description="Figure 5: screenshot from the app ">}}
 
 And this is how it presents on my desk:
 
-{{< figure src="desk2_1.jpg" align=center caption="how does it present on my desk? I'd say pretty decent">}}
+{{< centered-image src="desk2_1.jpg" alt="image" maxWidth="600px" description="Figure 5: how does it present on my desk? I'd say pretty decent ">}}
 
 It's been working for about 2 months now. I compare the results from time to time with the original map and it seems to be working perfectly.
 
