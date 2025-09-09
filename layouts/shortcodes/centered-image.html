@@ -5,7 +5,7 @@
 
 <div style="text-align:center;border:none;background:transparent;line-height:0">
   <a href="{{ $src }}" class="glightbox" style="text-decoration:none;border:none">
-    <img src="{{ $src }}" alt="{{ $alt }}" style="max-width:{{ $maxWidth }};cursor:zoom-in;display:inline-block;vertical-align:middle"/>
+    <img src="{{ $src }}" alt="{{ $alt }}" style="max-width:min({{ $maxWidth }}, 100%);width:100%;height:auto;cursor:zoom-in;display:inline-block;vertical-align:middle"/>
   </a>
   {{- if $description -}}
   <div style="margin-top:0px;font-size:0.9em;color:#666;font-style:italic;line-height:1.4">
