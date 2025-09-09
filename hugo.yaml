@@ -5,6 +5,7 @@ theme: ["hugo-admonitions", "PaperMod"]
 enableEmoji: true
 googleAnalytics: G-YFDSS2HG0B
 
+
 languages:
   en:
     languageName: "English"
@@ -15,36 +16,38 @@ languages:
       series: series
     menu:
       main:
-        - name: Archive
+        - name: archive
           url: archives
           weight: 5
+          identifier: archives
+        - name: about
+          url: about
+          weight: 1
+          identifier: about
 params:
   env: production
+  defaultTheme: light
+  disableThemeToggle: false
   analytics:
     google:
       ID: G-YFDSS2HG0B
-  ShowReadingTime: true
+  ShowReadingTime: false
   ShowCodeCopyButtons: true
-  ShowBreadCrumbs: true
+  ShowBreadCrumbs: false
   ShowShareButtons: false
   ShowAllPagesInArchive: true
   ShowPageNums: true
-  ShowRssButtonInSectionTermList: false
+  ShowRssButtonInSectionTermList: true
+
+  outputs:
+    home:
+    - html
+    - rss
+    - json
 
   homeInfoParams:
     Title: Messy thoughts dressed up with data
-    Content: |
-      Welcome to my personal blog! 👋 
-      
-      A few words about me: Professionally, I solve interesting problems using data, statistics, and technologies.
-      
-      - 
-
-      From time to time, intriguing (and sometimes weird) ideas, thoughts, or curious questions pop into my head — and I like to explore them in my free time.
-
-      - 
-
-      This blog is where I share those explorations, hoping they might inspire something of your own — and maybe also help motivate me to finish them.
+    Content: Welcome to my personal blog! Check out the latest posts and [about](about) page.
       
     buttons:
       - name: Archives
@@ -55,14 +58,18 @@ params:
   socialIcons:
     - name: linkedin
       url: https://www.linkedin.com/in/michal-cisek/
+    - name: rss
+      url: index.xml
 
 caches:
   images:
     dir: :cacheDir/images
 
 markup:
-  markup.goldmark:
-    markup.goldmark.renderer:
+  highlight:
+    noClasses: false
+  goldmark:
+    renderer:
       unsafe: true
 
 module:
