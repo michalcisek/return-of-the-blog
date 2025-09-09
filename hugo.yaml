@@ -47,7 +47,7 @@ params:
 
   homeInfoParams:
     Title: Messy thoughts dressed up with data
-    Content: Welcome to my personal blog! Check out latest posts and [about](about) page.
+    Content: Welcome to my personal blog! Check out the latest posts and [about](about) page.
       
     buttons:
       - name: Archives

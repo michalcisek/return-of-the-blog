@@ -1,0 +1,12 @@
+/* Custom color overrides for light mode */
+:root {
+    --theme: rgb(250, 247, 240);        /* Pleasant light beige background */
+    --entry: rgb(253, 251, 247);        /* Slightly lighter beige for cards/entries */
+    --code-bg: rgb(245, 242, 235);      /* Beige tinted code background */
+    --border: rgb(238, 235, 228);       /* Softer beige border */
+}
+
+/* Keep the list background consistent with the new theme */
+.list {
+    background: var(--code-bg);
+}
