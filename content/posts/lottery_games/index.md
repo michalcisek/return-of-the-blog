@@ -86,16 +86,36 @@ For solo mining we need to first understand better how this mystical "solving pu
 
 It turns out it's not complicated. The whole process is based on hashing. Hash functions take as input data of any size and return data with fixed size. They have a lot of use cases but are especially popular in cryptography, because of one property - they are irreversible, meaning you can't get back to input data having an output. One popular and important to our discussion hash function is function called SHA-256 (Secure Hash Algorithm; 256 because it always returns 256 bits as output; or 64 in hexadecimal). Below few examples of how this function works:
 
-`SHA256('short\ input') = 9a200a1b21abbd44409feb953026612cefe3f31bd35ff1c4b7b45ede7ce4f76f`
-
-`SHA256('short\ inputs') = 61ca78ec5b9849ad28dbf593dd9edcd780ea67c4cd936eb3f6721d7b80694fa8`
-
-$sha256("and\ this\ is\ longer\ input") = e175aea5ffc33e3458472cc5dc42a8a906d1deecd09eea65f123f84f77f1d046$
+```
+SHA256('short input') = 
+9a200a1b21abbd44409feb953026612cefe3f31bd35ff1c4b7b45ede7ce4f76f
+SHA256('short inputs') = 
+61ca78ec5b9849ad28dbf593dd9edcd780ea67c4cd936eb3f6721d7b80694fa8
+SHA256('and this is longer input') = 
+e175aea5ffc33e3458472cc5dc42a8a906d1deecd09eea65f123f84f77f1d046
+```
 
 Two desired properties shown here. First that for all cases the output length is the same. And second, that even small change in input leads to completely different output.
 
 Now back to our bitcoin use case. As mentioned before, Miners try to add new Bitcoin transactions (gathered in a block) to entire history.
-To do so, they take 
+To do so, they take block header, i.e. summary of new transactions that contain:
+- version (it signals which rules should be used for validation)
+- hash of previous block
+- hash of all transactions in current block (this hash is called Merkle Root)
+- timestamp
+- difficulty target
+- **and a random string called nonce**
+
+The two last fields are most important from mining perspective.
+All the fields are binary data, but for simplification we can they are simply strings. 
+What you do is:
+1. take the block header fields
+2. concatenate them
+3. use SHA-256 on it and gets a string
+4. take this string and use SHA-256 again
+
+Now you look at the difficulty target in block header. Long story short it defines how this output should look like to be accepted as correct solution.
+Basically it tells you how many leading zeros it's supposed to have. Quick practical example. Let's say the target tells you need to have 19
 
 
 
