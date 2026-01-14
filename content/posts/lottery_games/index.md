@@ -17,28 +17,24 @@ cover:
 >
 > *Most people agree playing lotto is fine. While the others treat it as a tax on stupidity.*
 >
-> *Some people treat poker as a skill-only game. Some people treat it as a one-way ticket to losing a house.*
+> *Some people treat poker as a skill-only game. Some treat it as a one-way ticket to losing a house.*
 >
 > *Some people paint human head and shoulders shapes on recent Nvidia stock prices and know in which direction it will move next. The others build advanced statistical models incorporating thousands of different information and believe the same. Some others believe it's a staged game, only to profit large institutions and rob individual investors.*
 > 
 > *You get the picture. Who is right? Where is "the line" splitting what can be played and what is dangerous? I certainly don't know. But I've noticed my perspective for it has changed over time so in this post I would like to talk loosely about my thoughts on 2 games of chance that popped to me last year.*
 
-### Disclaimer
-
-Let's start with a disclaimer. I have a rather liberal attitude towards broadly speaking lotteries. I don't mind betting some popular football games, or playing a blackjack. Actually I think going to casino with your friends is a really cool entertainment, as long as you don't treat it as potential income source and keep your expenses under control. But let's make it clear - I don't encourage anyone to play any games of chance. And I hope my opinions don't sound as a justification to do so. Things can get out of control easily and indeed it can end up with life-devastating addiction.
-
 # Intro
 
-So what's this post about? In 2025 I independently got hands on 2 games of chance.
+So what's this post about? In 2025 I independently got interested in 2 lottery games.
 
 ### OG lottery
 
 First is a classic Lotto game - national lottery where you pick 6 numbers from some range, then there is a drawing and you hope the drawn numbers are the same as those picked by you.
-Obviously it's not like I first heard about Lotto last year. But till that time I treated it, as mentioned above, as a tax on stupidity. And I think I haven't play intentionally even once in my life.
+Obviously it's not like I first heard about Lotto last year. But till that time I treated it, as mentioned above, as a tax on stupidity. I think I haven't play intentionally even once in my life.
 But then I discovered there is an official mobile app for it. You can easily transfer the money, place the bets and enjoy losing your money. And I started to think: "hey, if you don't jump on the carousel of randomness, the prize keeps spinning past your hands" (*Paulo Ciselho, 2026*).
-Lotto ticket is quite cheap, so I figured why don't participate on a regular basis, say once a week. That would equal to ~150 PLN a year - money that almost certainly needs to be deducted from your account, but with **some** chance of winning. 150 PLN a year to have a chance of winning few millions doesn't sound bad, right?
+Lotto ticket is quite cheap, so I figured why not to participate on a regular basis, say once a week. That would equal to ~150 PLN a year - money that almost certainly needs to be deducted from your account, but with **some** chance of winning. 150 PLN a year to have a chance of winning few millions doesn't sound bad, right?
 
-Of course I don't want to go once a week to a shopping mall or wherever you can buy now lotto tickets. I love automating different parts of my life, so I also wanted to automate placing bets. And actually in the official app there is an option to subscribe, so you won't miss any drawing. But it lacked flexibility I needed for such serious matter. You can't set your custom frequency - I wanted to play only once a week, but there are 3 drawings a week. And you can't change the numbers between drawings - you have to stick to the same numbers or trust in random system of the provider. I didn't like that. So I tried to prepare a custom script that would emulate entering the app and buying lotto tickets every week. But it turned out it's a lot of fuss - the app is secured well and it's a strictly regulated market so I gave up on the idea.
+Of course I don't want to go once a week to a shopping mall or wherever you can buy now lotto tickets. Neither I want to remember to once a week place a bet in the app. I love automating different parts of my life, so I also wanted to automate placing bets. And actually in the official app there is an option to subscribe, so you won't miss any drawing. But it lacked flexibility I needed for such serious matter. You can't set your custom frequency - I wanted to play only once a week, but there are 3 drawings a week. And you can't change the numbers between drawings - you have to stick to the same numbers or trust in random system of the provider. I didn't like that. So I tried to prepare a custom script that would emulate entering the app and buying lotto tickets every week. But it turned out it's a lot of fuss - the app is secured well and it's a strictly regulated market so I gave up on the idea.
 
 ### New-school lottery
 
@@ -46,7 +42,7 @@ A few months later I've seen some short on Instagram about a device for Bitcoin 
 
 The catch is that those puzzles I mentioned are really hard to solve, so in reality miners with their massive computers gather in groups to have even more computational power and therefore have more chance to find a solution. If the group find it, they share the reward - higher chance, but lower payoff. 
 
-Now, the device I mentioned is on the spectrum - it has really poor computational power compared to regular miners and you do it by yourself. So low chance, but maximum payoff if succeeded. So yes, another lottery. But lottery quite different to Lotto in terms of rules. The prize is indeed similar - you become a millionaire. But I didn't mention how often miners need to solve those computational puzzles. It happen to be every 10 minutes on average. So every 10 minutes you participate in a lottery with a chance of winning the main prize. And you do so automatically - no need to buy the tickets. 
+Now, the device I mentioned is on the spectrum - it has really poor computational power compared to regular miners and you do it by yourself. So very low chance, but maximum payoff if succeeded. You are right, that's another lottery. But lottery quite different to Lotto in terms of rules. The prize is indeed similar - you become a millionaire. But I didn't mention how often miners need to solve those computational puzzles. It happen to be every 10 minutes on average. So every 10 minutes you participate in a lottery with a chance of winning the main prize. And you subscribe to it automatically - no need to buy the tickets. 
 
 {{< centered-image src="nmminer_2.png" alt="image" maxWidth="600px" description="Figure 1: Device I bought for Bitcoin solo mining" >}}
 
@@ -56,7 +52,7 @@ At this stage a natural question came to my mind. In which lottery game you have
 
 For sure you have some gut feeling about answers. For lotto you pay a fixed amount to participate and that's gonna negatively impact our profit and loss account. For solo mining you pay once to participate: you just need the device that costs about 150 PLN (so one year worth of Lotto tickets) + the cost of electricity (power consumption of such devices is low). In terms of winning chances, even if you don't know a thing about cryptocurrencies, you might suspect that the chance of finding a right solution to the puzzles is way lower than picking correctly 6 numbers out of 49. But on the other hand for solo mining you have a chance every 10 minutes, and for Lotto only once a week.
 
-Our brains aren't naturally good at processing very small probabilities, so for example a 1 in 300 million chance doesn't feel that different from 1 in 30 million. That is probably why lottery operator companies don't go bankrupt. And that is also why we're going to calculate it precisely to have a clear comparison.
+Our brains aren't naturally good at processing very small probabilities, so for example a 1 in 300 million chance doesn't feel that different from 1 in 30 million. That is probably why lottery operator companies don't go bankrupt. And that is also why we're going to calculate the chances precisely to have a clear comparison.
 
 # Crunching numbers - Lotto
 
@@ -65,7 +61,7 @@ For Lotto it's rather straightforward to get the numbers. The game has been stud
 $\binom{49}{6} = 13\ 983\ 816$ - this tells you how many possible 6-numbers draws there are out of 49 numbers. Out of all these possible outcomes only one represents winning set of numbers, so the probability is:
 
 $$
-P(Lotto\ jackpot) = \frac{1}{13\ 983\ 816} = 0.000007151%
+P(Lotto\ jackpot) = \frac{1}{13\ 983\ 816} = 0.000007151\\%
 $$
 
 The general formula to calculate probability of drawing exactly $k$ numbers is: 
@@ -86,11 +82,11 @@ $$
 NEV(single\ game) = EV - cost = 0.85 - 3 = -2.15\ PLN
 $$
 
-You expoect to lose 2.15 PLN per play. In other words you could say that on average you get back 28.33% of what you spend ($0.85 / 3$).
+You expect to lose 2.15 PLN per play. In other words you could say that on average you get back 28.33% of what you spend ($0.85 / 3$).
 
 Now let's back to our initial game assumption. I wanted to see what happens if I would play Lotto for 10 years, once a week.
 That adds up to 520 tickets, so a total cost is 1560 PLN.
-Our expected payouts is 442 PLN ($0.85*520$ - as events are independent we expect to get the same payout everytime).
+Our expected payouts is 442 PLN ($0.85*520$ - as events are independent).
 So in 10 years our net expected value is:
 $$
 NEV(in\ 10\ years) = 442 - 1560 = -1118\ PLN
@@ -105,13 +101,13 @@ $$
 
 # Crunching numbers - Solo mining
 
-For solo mining we need to first understand better how this mystical "solving puzzles" work. To me it always sounded like some rocket-science task to perform that justify using so much computing power and driving up graphic card prices just in time when I needed to buy one back in 2019.
+For solo mining we need to first understand better how this mystical "solving puzzles" work. To me it always sounded like some rocket-science task to perform that justifies using so much computing power. And that justifies graphic cards price hike just in time when I needed to buy one back in 2019 (now it's the same with RAM prices thanks to LLMs).
 
 ### Hashing - the mining cornerstone
 
 It turns out it's not complicated. The whole process is based on hashing. Hash functions take as input data of any size and return data with fixed size. They have a lot of use cases but are especially popular in cryptography, because of one property - they are irreversible, meaning you can't get back to input data having an output. One popular and important to our discussion hash function is function called SHA-256 (Secure Hash Algorithm; 256 because it always returns 256 bits as output; or 64 in hexadecimal). Below few examples of how this function works:
 
-```
+```python
 SHA256('short input') = 
 9a200a1b21abbd44409feb953026612cefe3f31bd35ff1c4b7b45ede7ce4f76f
 SHA256('short inputs') = 
@@ -124,7 +120,7 @@ Two desired properties are shown here. First, that for all cases the output leng
 
 ### Understanding the mining process
 
-Now back to our bitcoin use case. As mentioned before, Miners try to add a new block of Bitcoin transactions to the blockchain (transaction history). How do they actually do it? 
+Now back to our bitcoin use case. As mentioned before, miners try to add a new block of Bitcoin transactions to the blockchain (transaction history). How do they actually do it? 
 They construct a new block header, which contains metadata about the block and a summary of its transactions. Such a header contains:
 - version (signals which rules should be used for validation)
 - hash of previous block
@@ -140,7 +136,7 @@ Basically those requirements specify how small the hash must be. This is often e
 `000000a5ffc33e3458472cc5dc42a8a906d1deecd09eea65f123f84f77f1d046` has six leading zeros).
 Technically, the rule is that the hash must be numerically lower than a target value, but using leading zeros is a convenient simplification.
 
-There are many quirks to this process, but for the further discussion such representation is enough:
+There are many quirks to this process, but for the further discussion such representation of mining is enough:
 1. change Nonce value in block header
 2. take the entire block header and apply SHA-256 function on it to get a hash
 3. apply SHA-256 again on the hash from previous step
@@ -161,7 +157,7 @@ P(single\ block) = \frac{Your\ device\ hashrate}{Network\ hashrate} = \frac{10^6
 $$
 
 
-For expected value for single block, we multiply this probability by reward and deduce costs of electricity (we can neglect cost of purchasing device at this stage).
+For expected value for single block we multiply this probability by reward and deduce costs of electricity (we can neglect cost of purchasing device at this stage).
 Reward is 3.125 BTC (let's skip transaction fees that would increase it). That is 1 030 000 PLN as of today.
 1 kWh costs about 1 PLN. That's 0.00017 PLN for the average time of finding single block (10 minutes).
 
@@ -172,18 +168,18 @@ $$
 
 So basically net expected value for single block is the cost of electricity needed to power the device.
 
-What about 10-years period as assummed initially?
+What about 10-years horizon as assummed initially?
 Over 10 years there will be 525 960 blocks. That gives us expected $5.26*10^{-10}$ blocks (0.000000000526).
-The prize for finding block changes ~4 years. To be precise, it decreseas by half (this event is called Bitcoin Halving). The last halving was in 2024, so we can assume the prize will be 3.125 till 2028, then it will decrease to 1.5625 and in 2032 0.78125. So for the next 10 years we can assume the prize will be 1.5625 (using weighted average).
+The prize for finding block changes roughly every 4 years. To be precise, it decreseas by half (this event is called Bitcoin Halving). The last halving was in 2024, so we can assume the prize will be 3.125 till 2028, then it will decrease to 1.5625 and in 2032 to 0.78125. So for the next 10 years we can assume the prize will be 1.5625 (using weighted average).
 
-As it goes for the costs we have to include here both electricity and device cost. The former would be 87.6 PLN and the latter 150 PLN. Spoiler alert, the expected payout is still very small, so we will see again only costs part in expected payout calculations:
+As it goes for the costs we have to include here both electricity and device cost. The former would be 87.6 PLN and the latter 150 PLN. Spoiler alert: the expected payout is still close to zero, so we will see again only costs part in expected payout calculations:
 
 $$
 NEV(in\ 10\ years) = 5.26*10^{-10} * 1.5625 * 330000 - (87.6+150) = \newline
 = -237.5997\ PLN
 $$
 
-And the assumptions I made here are on the optimistic side I'd say because I assume fixed electricity cost, fixed Bitcoin price, fixed network hashrate. Not to mention that based on my experience this device is not the most stable one - it often can't connect to network and therefore doesn't participate continously in mining process.
+And the assumptions I made here are on the optimistic side I'd say, because I assume fixed electricity cost, fixed Bitcoin price, fixed network hashrate. Not to mention that based on my experience this device is not the most stable one - it often loses connection to network and therefore doesn't participate continously in mining process.
 
 > Three interesting facts:
 > - for our device the expected time to find one block is ~19 billion years (that's longer than the age of the universe!)
@@ -198,9 +194,9 @@ To sum up, let's think of other factors that encourage people towards lottery ga
 
 For Lotto I guess it's the phenomenon of "near misses" that keeps people engaged. Getting four out of six numbers triggers similar brain responses to actual wins. And this creates illusion that you're getting closer, forgetting that each attempt is independent.
 This occasional small reward structure is particularly powerful. Variable, unpredictable rewards are more compelling to human brains than consistent ones. This is the same mechanism that makes social media scrolling so engaging. You never know what interesting might pop up next, which maintains interest and anticipation.
-Then there is this element of personal superstition like your lucky numbers or some kind of rituals (I remember my father asking me to pick one number on his coupon). 
+And for sure element of personal superstition plays a role, like your lucky numbers or some kind of rituals (I remember my father asking me to pick one number on his coupon). 
 
-For solo mining I guess there are some people driven by ideological reasons, that do so to participate in network security and to preserve decentralization. C'mon, they do it because of the greed (insert Gordon Gekko picture). Unless you have large bitcoin miner, it's basically Lotto on steroids.
+For solo mining I guess there are some people driven by ideological reasons, that do so to participate in network security and to preserve decentralization. C'mon, they do it because of the greed (insert Gordon Gekko picture). Unless you have a large bitcoin miner, it's basically Lotto on steroids.
 The upside is for sure low cost of participation, both from device and power consumption perspective. This creates psychological appeal of hope and possibility - it's easy to justify it as "buying a dream" for few bucks.
 And let's not forget about availability bias, that is overestimating the likelihood of things we can easily recall. Lottery wins get significant media attention, making them memorable, like [this recent example](https://forklog.com/en/solo-miner-strikes-bitcoin-block-earns-264558/) of solo miner finding a block.
 
