@@ -1,6 +1,6 @@
 ---
-date: '2026-01-07T19:35:13+01:00'
-draft: true
+date: '2026-01-14T13:35:13+01:00'
+draft: false
 title: 'Is your lottery ticket worth the effort?'
 ShowToc: true
 ShowReadingTime: true
