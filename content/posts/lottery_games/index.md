@@ -188,9 +188,10 @@ And the assumptions I made here are on the optimistic side, I'd say, because I a
 
 # Summary
 
-So there we have it. Now the chances in these two games are quantified. 
+So there we have it. Now the chances in these two games are quantified and the verdict is clear.
 Not surprisingly, in both cases it's extremely unlikely to win, even in a 10-year period.
-To sum up, let's think of other factors that encourage people towards lottery games.
+Numerically speaking, you have higher chance to win the Lotto jackpot, but if you wish to minimise the lost money, solo mining should be considered.
+To sum up this article, let's think of other factors that encourage people towards lottery games.
 
 For Lotto I guess it's the phenomenon of "near misses" that keeps people engaged. Getting four out of six numbers triggers similar brain responses to actual wins. And this creates the illusion that you're getting closer, forgetting that each attempt is independent.
 This occasional small reward structure is particularly powerful. Variable, unpredictable rewards are more compelling to human brains than consistent ones. This is the same mechanism that makes social media scrolling so engaging. You never know what interesting might pop up next, which maintains interest and anticipation.
