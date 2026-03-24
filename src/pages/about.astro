@@ -1,0 +1,46 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CenteredImage from '../components/CenteredImage.astro';
+---
+
+<BaseLayout title="About - Michal Cisek">
+  <div class="about-content">
+    <h1>Messy thoughts dressed up with data</h1>
+
+    <p>Welcome to my personal blog! &#128075;</p>
+
+    <p>
+      A few words about me: Professionally, I solve interesting problems using
+      data, statistics, and technologies.
+    </p>
+
+    <p>
+      From time to time, intriguing (and sometimes weird) ideas, thoughts, or
+      curious questions pop into my head — and I like to explore them in my free
+      time.
+    </p>
+
+    <p>
+      This blog is where I share those explorations, hoping they might inspire
+      something of your own — and maybe also help motivate me to finish them.
+    </p>
+
+    <CenteredImage
+      src="/prof.jpg"
+      alt="Profile photo"
+      maxWidth="800px"
+      description="what besides programming? nature and beer I guess"
+    />
+  </div>
+
+  <script>
+    import GLightbox from 'glightbox';
+    GLightbox({
+      selector: '.glightbox',
+      touchNavigation: true,
+      loop: true,
+      zoomable: true,
+      slideEffect: 'fade',
+    });
+  </script>
+</BaseLayout>
