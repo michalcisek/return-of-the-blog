@@ -8,6 +8,7 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft))
 ---
 
 <BaseLayout title="Michal Cisek">
+  <canvas id="particle-network" aria-hidden="true"></canvas>
   <section class="hero">
     <h1>Messy thoughts dressed up with data</h1>
     <p>
@@ -45,4 +46,183 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft))
       );
     })}
   </ul>
+<style>
+  #particle-network {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .hero, .post-list {
+    position: relative;
+    z-index: 1;
+  }
+</style>
+
+<script>
+  function initParticles() {
+    const canvas = document.getElementById('particle-network') as HTMLCanvasElement;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+
+    let width = 0;
+    let height = 0;
+    let mouse = { x: -9999, y: -9999 };
+    let animationId: number;
+
+    const PARTICLE_COUNT = 160;
+    const CONNECTION_DIST = 150;
+    const MOUSE_RADIUS = 200;
+    const BASE_SPEED = 0.3;
+
+    interface Particle {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      radius: number;
+    }
+
+    let particles: Particle[] = [];
+
+    function isDark() {
+      return document.documentElement.classList.contains('dark');
+    }
+
+    function getColors() {
+      const dark = isDark();
+      return {
+        particle: dark ? 'rgba(201, 209, 217, 0.5)' : 'rgba(36, 41, 46, 0.35)',
+        line: dark ? 'rgba(201, 209, 217,' : 'rgba(36, 41, 46,',
+        mouseGlow: dark ? 'rgba(88, 166, 255,' : 'rgba(9, 105, 218,',
+      };
+    }
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+
+    function createParticles() {
+      particles = [];
+      for (let i = 0; i < PARTICLE_COUNT; i++) {
+        particles.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * BASE_SPEED * 2,
+          vy: (Math.random() - 0.5) * BASE_SPEED * 2,
+          radius: Math.random() * 2 + 1,
+        });
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+      const colors = getColors();
+
+      // Update and draw particles
+      for (const p of particles) {
+        // Move
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Bounce off edges
+        if (p.x < 0 || p.x > width) p.vx *= -1;
+        if (p.y < 0 || p.y > height) p.vy *= -1;
+
+        // Mouse repulsion
+        const dx = p.x - mouse.x;
+        const dy = p.y - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < MOUSE_RADIUS && dist > 0) {
+          const force = (MOUSE_RADIUS - dist) / MOUSE_RADIUS * 0.02;
+          p.vx += (dx / dist) * force;
+          p.vy += (dy / dist) * force;
+        }
+
+        // Dampen velocity
+        const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+        if (speed > BASE_SPEED * 3) {
+          p.vx *= 0.98;
+          p.vy *= 0.98;
+        }
+
+        // Draw particle
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = colors.particle;
+        ctx.fill();
+      }
+
+      // Draw connections
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < CONNECTION_DIST) {
+            const opacity = (1 - dist / CONNECTION_DIST) * 0.15;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = colors.line + opacity + ')';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Draw mouse connections
+      for (const p of particles) {
+        const dx = p.x - mouse.x;
+        const dy = p.y - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < MOUSE_RADIUS) {
+          const opacity = (1 - dist / MOUSE_RADIUS) * 0.3;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(mouse.x, mouse.y);
+          ctx.strokeStyle = colors.mouseGlow + opacity + ')';
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+      }
+
+      animationId = requestAnimationFrame(draw);
+    }
+
+    document.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    window.addEventListener('mouseleave', () => {
+      mouse.x = -9999;
+      mouse.y = -9999;
+    });
+
+    window.addEventListener('resize', () => {
+      resize();
+    });
+
+    resize();
+    createParticles();
+    draw();
+
+    // Cleanup on navigation (Astro view transitions)
+    document.addEventListener('astro:before-preparation', () => {
+      cancelAnimationFrame(animationId);
+    }, { once: true });
+  }
+
+  // Run on initial load and on Astro navigation
+  initParticles();
+  document.addEventListener('astro:after-swap', initParticles);
+</script>
 </BaseLayout>

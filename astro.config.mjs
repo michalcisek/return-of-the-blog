@@ -13,8 +13,8 @@ export default defineConfig({
     rehypePlugins: [[rehypeKatex, { strict: false }]],
     shikiConfig: {
       themes: {
-        light: 'github-light',
-        dark: 'github-dark',
+        light: 'catppuccin-latte',
+        dark: 'catppuccin-mocha',
       },
     },
   },
