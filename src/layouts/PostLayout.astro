@@ -1,0 +1,76 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import TableOfContents from '../components/TableOfContents.astro';
+
+interface Props {
+  title: string;
+  date: Date;
+  showToc?: boolean;
+  showReadingTime?: boolean;
+  minutesRead?: string;
+  math?: boolean;
+  coverSrc?: string;
+  headings: { depth: number; slug: string; text: string }[];
+}
+
+const { title, date, showToc = false, showReadingTime = false, minutesRead, math = false, coverSrc, headings } = Astro.props;
+
+const formattedDate = date.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<BaseLayout title={title} math={math}>
+  <article>
+    <header class="article-header">
+      <h1>{title}</h1>
+      <div class="article-meta">
+        <time datetime={date.toISOString()}>{formattedDate}</time>
+        {showReadingTime && minutesRead && <span>{minutesRead}</span>}
+      </div>
+    </header>
+
+    {coverSrc && <img class="article-cover" src={coverSrc} alt={title} />}
+
+    {showToc && <TableOfContents headings={headings} />}
+
+    <div class="article-content">
+      <slot />
+    </div>
+  </article>
+
+  <!-- GLightbox init -->
+  <script>
+    import GLightbox from 'glightbox';
+    GLightbox({
+      selector: '.glightbox',
+      touchNavigation: true,
+      loop: true,
+      zoomable: true,
+      slideEffect: 'fade',
+    });
+  </script>
+
+  <!-- Code copy buttons -->
+  <script>
+    document.querySelectorAll('.article-content pre').forEach((pre) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'code-block-wrapper';
+      pre.parentNode?.insertBefore(wrapper, pre);
+      wrapper.appendChild(pre);
+
+      const btn = document.createElement('button');
+      btn.className = 'copy-code-btn';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', async () => {
+        const code = pre.querySelector('code')?.textContent || pre.textContent || '';
+        await navigator.clipboard.writeText(code);
+        btn.textContent = 'Copied!';
+        setTimeout(() => (btn.textContent = 'Copy'), 2000);
+      });
+      wrapper.appendChild(btn);
+    });
+  </script>
+</BaseLayout>

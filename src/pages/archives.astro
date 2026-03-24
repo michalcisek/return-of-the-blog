@@ -1,0 +1,40 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('posts', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const postsByYear = posts.reduce<Record<number, typeof posts>>((acc, post) => {
+  const year = post.data.date.getFullYear();
+  (acc[year] ??= []).push(post);
+  return acc;
+}, {});
+
+const years = Object.keys(postsByYear)
+  .map(Number)
+  .sort((a, b) => b - a);
+---
+
+<BaseLayout title="Archives - Michal Cisek">
+  <h1 style="margin-bottom: 2rem;">Archives</h1>
+
+  {years.map((year) => (
+    <section class="archive-year">
+      <h2>{year}</h2>
+      <ul class="archive-list">
+        {postsByYear[year].map((post) => (
+          <li>
+            <a href={`/posts/${post.id}/`}>{post.data.title}</a>
+            <span class="archive-date">
+              {post.data.date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+              })}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</BaseLayout>

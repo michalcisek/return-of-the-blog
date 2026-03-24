@@ -1,0 +1,38 @@
+---
+interface Props {
+  src: string | ImageMetadata | Promise<{ default: ImageMetadata }>;
+  alt?: string;
+  maxWidth?: string;
+  description?: string;
+}
+
+const { src, alt = 'image', maxWidth = '400px', description } = Astro.props;
+
+let resolvedSrc: string;
+if (typeof src === 'string') {
+  resolvedSrc = src;
+} else if (src && typeof src === 'object' && 'then' in src) {
+  const mod = await (src as Promise<{ default: ImageMetadata }>);
+  resolvedSrc = mod.default.src;
+} else if (src && typeof src === 'object' && 'src' in src) {
+  resolvedSrc = (src as ImageMetadata).src;
+} else {
+  resolvedSrc = String(src);
+}
+---
+
+<div style={`text-align:center;border:none;background:transparent;line-height:0;margin:1.25rem 0`}>
+  <a href={resolvedSrc} class="glightbox" style="text-decoration:none;border:none">
+    <img
+      src={resolvedSrc}
+      alt={alt}
+      style={`max-width:min(${maxWidth}, 100%);width:100%;height:auto;cursor:zoom-in;display:inline-block;vertical-align:middle`}
+      loading="lazy"
+    />
+  </a>
+  {description && (
+    <div style="margin-top:0px;font-size:0.9em;color:#666;font-style:italic;line-height:1.4">
+      {description}
+    </div>
+  )}
+</div>
