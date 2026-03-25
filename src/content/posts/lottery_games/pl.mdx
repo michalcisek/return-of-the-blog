@@ -1,0 +1,205 @@
+---
+date: '2026-01-14T13:35:13+01:00'
+draft: false
+lang: 'pl'
+title: 'Czy Twój los na loterię jest wart zachodu?'
+ShowToc: true
+ShowReadingTime: true
+math: true
+cover:
+  image: "./cover2.png"
+---
+
+import CenteredImage from '../../../components/CenteredImage.astro';
+
+> *Poznałem ludzi o bardzo różnym podejściu do gier losowych. Wydaje mi się, że w dużej mierze zależy to od indywidualnej tolerancji na ryzyko i różnych obaw przed uzależnieniem. Przez to ludzie rysują granicę w różnych miejscach - co jest jeszcze akceptowalne, a co czyni z ciebie natychmiastowego hazardzistę (podobnie jak w przypadku substancji chemicznych).*
+>
+> *Większość ludzi uważa, że granie w Lotto jest w porządku, podczas gdy inni traktują to jako podatek od głupoty.*
+>
+> *Niektórzy traktują pokera jako grę opartą wyłącznie na umiejętnościach. Inni widzą w nim bilet w jedną stronę do utraty domu.*
+>
+> *Niektórzy dorysowują kształty głowy i ramion na wykresie cen akcji Nvidii i wiedzą, w którym kierunku pójdzie kurs. Inni budują zaawansowane modele statystyczne uwzględniające tysiące różnych informacji i wierzą w to samo. A jeszcze inni uważają, że to ustawiona gra, stworzona tylko po to, by zarabiały duże instytucje, a indywidualni inwestorzy tracili.*
+>
+> *Rozumiecie, o co chodzi. Kto ma rację? Gdzie przebiega "granica" dzieląca to, w co można grać, od tego, co jest niebezpieczne? Na pewno nie wiem. Ale zauważyłem, że moja perspektywa zmieniała się z czasem, więc w tym poście chciałbym luźno opowiedzieć o moich przemyśleniach na temat dwóch gier losowych, na które trafiłem w zeszłym roku.*
+
+# Wstęp
+
+O czym więc jest ten post? W 2025 roku niezależnie od siebie zainteresowałem się dwoma grami losowymi.
+
+### Klasyczna loteria
+
+Pierwsza to klasyczne Lotto - loteria państwowa, w której wybierasz sześć liczb z określonego zakresu, potem odbywa się losowanie i masz nadzieję, że wylosowane liczby pokrywają się z tymi, które wybrałeś.
+Oczywiście nie jest tak, że o Lotto dowiedziałem się dopiero w zeszłym roku. Ale do tego czasu traktowałem je, jak wspomniałem wyżej, jako podatek od głupoty. Chyba nigdy w życiu nie zagrałem świadomie.
+Ale potem odkryłem, że istnieje oficjalna aplikacja mobilna. Można łatwo przelać pieniądze, postawić zakład i cieszyć się z ich utraty. I zacząłem sobie myśleć: "hej, jak nie wskoczysz na karuzelę losowości, nagroda będzie ci się wymykać z rąk" (*Paulo Ciselho, 2026*).
+Kupon Lotto jest dość tani, więc pomyślałem - czemu nie grać regularnie, powiedzmy raz w tygodniu. To daje ~150 PLN rocznie - pieniądze, które prawie na pewno trzeba odpisać ze swojego konta, ale z **pewną** szansą na wygraną. 150 PLN rocznie za szansę na wygranie kilku milionów nie brzmi źle, prawda?
+
+Oczywiście nie chcę chodzić raz w tygodniu do galerii handlowej czy gdziekolwiek teraz można kupić kupony Lotto. Nie chcę też pamiętać, żeby raz w tygodniu postawić zakład w aplikacji. Uwielbiam automatyzować różne aspekty mojego życia, więc chciałem też zautomatyzować stawianie zakładów. W oficjalnej aplikacji jest opcja subskrypcji, dzięki której nie przegapisz żadnego losowania. Ale brakowało jej elastyczności, jakiej potrzebowałem w tak poważnej sprawie. Nie można ustawić własnej częstotliwości - chciałem grać tylko raz w tygodniu, a losowania odbywają się trzy razy w tygodniu. I nie można zmieniać liczb między losowaniami - trzeba trzymać się tych samych albo zaufać losowemu systemowi dostawcy. To mi się nie podobało. Więc spróbowałem przygotować własny skrypt, który emulowałby wejście do aplikacji i kupowanie kuponów co tydzień. Ale okazało się, że to masa zachodu - aplikacja jest dobrze zabezpieczona, a rynek ściśle regulowany, więc porzuciłem ten pomysł.
+
+### Loteria nowej generacji
+
+Kilka miesięcy później zobaczyłem na Instagramie krótki filmik o urządzeniu do solo miningu Bitcoina (*Rysunek 1*). Nie jestem specjalnie w temacie kryptowalut, ale opiszę szczegółowo, jak to działa, nieco później. Na razie uprośćmy to mocno. Bitcoin ma być cyfrową walutą (powtarzam: cyfrową walutą, nie aktywem spekulacyjnym. Ma służyć do płatności, a nie do modlenia się, żeby cena odbiła ;)). Jeśli chcesz, żeby ludzie używali twojej waluty, musisz zbudować wokół niej zaufanie. "Zwykłe" waluty budują zaufanie poprzez wsparcie państw i ich banków centralnych. Bitcoin robi to inaczej. Wykorzystuje sieć komputerów do zapewnienia zaufania. Część tej sieci, zwana "górnikami" (miners), zbiera ostatnie transakcje Bitcoin i, rozwiązując zagadki obliczeniowe, proponuje sposób ich zapisania w pełnej historii wszystkich transakcji. Pozostałe komputery w sieci automatycznie weryfikują, czy propozycja spełnia oczekiwane reguły. Jeśli tak, górnik z poprawnym rozwiązaniem dostaje nagrodę - obecnie jest to 3.125 BTC (nieco powyżej 1 000 000 PLN w momencie pisania) + opłaty transakcyjne od użytkowników.
+
+Haczyk polega na tym, że te zagadki, o których wspomniałem, są naprawdę trudne do rozwiązania, więc w praktyce górnicy ze swoimi potężnymi komputerami zbierają się w grupy, aby mieć jeszcze więcej mocy obliczeniowej i tym samym większą szansę na znalezienie rozwiązania. Jeśli grupa je znajdzie, dzielą się nagrodą - wyższa szansa, ale niższa wypłata.
+
+Urządzenie, o którym wspomniałem, jest po drugiej stronie spektrum - ma naprawdę słabą moc obliczeniową w porównaniu ze zwykłymi koparkami i kopiesz sam. Czyli bardzo niska szansa, ale maksymalna wypłata w przypadku sukcesu. Zgadza się, to kolejna loteria. Ale ma zupełnie inne zasady niż Lotto. Nagroda jest rzeczywiście podobna - zostajesz milionerem. Ale nie wspomniałem jeszcze, jak często górnicy muszą rozwiązywać te zagadki obliczeniowe. Dzieje się to średnio co 10 minut. Więc co 10 minut uczestniczysz w loterii z szansą na wygranie głównej nagrody. I zapisujesz się automatycznie - nie trzeba kupować kuponów.
+
+<CenteredImage src={import('./nmminer_2.png')} alt="image" maxWidth="600px" description="Figure 1: Device I bought for Bitcoin solo mining" />
+
+### Łączenie kropek
+
+Na tym etapie naturalne pytanie przyszło mi do głowy. W której loterii masz większą szansę na wygranie głównej nagrody? A gdybyś miał grać w obie gry przez okres, powiedzmy, 10 lat, która zarobiłaby ci więcej pieniędzy? Okej, bądźmy realistami - oczywiście w obu scenariuszach w dłuższej perspektywie tracisz pieniądze. Ale na którą z nich powinieneś się zapisać, żeby zminimalizować straty i nadal mieć to ekscytujące, złudne uczucie potencjalnej wygranej?
+
+Na pewno macie jakąś intuicję co do odpowiedzi. W Lotto płacisz stałą kwotę za udział i to negatywnie wpłynie na nasz rachunek zysków i strat. W solo miningu płacisz raz za uczestnictwo: potrzebujesz urządzenia, które kosztuje około 150 PLN (czyli tyle co rok gry w Lotto) + koszt prądu (pobór mocy takich urządzeń jest niski). Jeśli chodzi o szanse na wygraną, nawet jeśli nie wiesz nic o kryptowalutach, możesz podejrzewać, że szansa na znalezienie właściwego rozwiązania zagadki jest znacznie niższa niż prawidłowe wytypowanie sześciu liczb z 49. Ale z drugiej strony w solo miningu masz szansę co 10 minut, a w Lotto tylko raz w tygodniu.
+
+Nasze mózgi nie radzą sobie naturalnie z przetwarzaniem bardzo małych prawdopodobieństw, więc na przykład szansa 1 do 300 milionów nie wydaje się aż tak różna od 1 do 30 milionów. To prawdopodobnie dlatego operatorzy loterii nie bankrutują. I dlatego właśnie policzymy szanse dokładnie, żeby mieć jasne porównanie.
+
+# Liczymy - Lotto
+
+W przypadku Lotto uzyskanie liczb jest dość proste. Gra została przeanalizowana wzdłuż i wszerz, a matematyka to w zasadzie powtórka z kombinatoryki ze szkoły średniej. Aby obliczyć szansę na wygranie głównej nagrody w jednym losowaniu, trzeba użyć współczynnika dwumianowego ($\binom{n}{k} = \frac{n!}{k!(n-k)!}$).
+
+$\binom{49}{6} = 13\ 983\ 816$ - to mówi nam, ile możliwych losowań 6 liczb z 49 istnieje. Spośród wszystkich tych możliwych wyników tylko jeden reprezentuje zwycięski zestaw liczb, więc prawdopodobieństwo wynosi:
+
+$$
+P(Lotto\ jackpot) = \frac{1}{13\ 983\ 816} = 0.000007151\\%
+$$
+
+Ogólny wzór na obliczenie prawdopodobieństwa wylosowania dokładnie $k$ liczb to:
+$$
+P(k) = \frac{\binom{6}{k}\binom{43}{6-k}}{\binom{49}{6}}
+$$
+
+Do obliczenia wartości oczekiwanej pojedynczego kuponu musimy znać wypłaty. Pieniądze wygrywasz, gdy trafisz trzy, cztery, pięć lub sześć liczb. Za trzy liczby dostajesz gwarantowane 24 PLN. Za cztery liczby dostajesz średnio 187.24 PLN (na podstawie ostatnich 100 losowań). Za pięć liczb dostajesz średnio 5807.11 PLN (również na podstawie ostatnich 100 losowań). Za sześć liczb, jeśli jesteś jedyną osobą z prawidłowym kuponem, wygrywasz 2 000 000 PLN lub więcej, jeśli podczas ostatniego losowania nikt nie wygrał i pula się kumuluje. Na nasze potrzeby załóżmy, że to 2 mln PLN.
+
+Aby obliczyć wartość oczekiwaną, korzystamy z powyższego wzoru i informacji o wypłatach:
+
+$$
+EV = 24\*P(3) + 187.24\*P(4) + 5807.11\*P(5) + 2000000\*P(6) = 0.85\ PLN
+$$
+
+Twoja łączna oczekiwana wypłata brutto to 0.85 PLN, ale za kupon płacisz 3 PLN, co daje oczekiwaną wartość netto:
+$$
+NEV(single\ game) = EV - cost = 0.85 - 3 = -2.15\ PLN
+$$
+
+Oczekujesz straty 2.15 PLN na grę. Innymi słowy, można powiedzieć, że średnio odzyskujesz 28.33% tego, co wydajesz ($0.85 / 3$).
+
+Wróćmy teraz do naszego początkowego założenia. Chciałem zobaczyć, co się stanie, jeśli będę grał w Lotto przez 10 lat, raz w tygodniu.
+To daje 520 kuponów, a więc łączny koszt 1560 PLN.
+Nasza oczekiwana wypłata to 442 PLN ($0.85*520$ - ponieważ zdarzenia są niezależne).
+Więc w ciągu 10 lat nasza oczekiwana wartość netto wynosi:
+$$
+NEV(in\ 10\ years) = 442 - 1560 = -1118\ PLN
+$$
+
+
+> Trzy ciekawostki:
+> - w ciągu 10 lat możemy spodziewać się trafienia trzech liczb około dziewięć razy: $520 * P(3) = 9.18$
+> - mamy prawie 40% szans na trafienie czterech liczb: $1 - (1 - P(4))^{520} = 0.396$
+> - musiałbym grać co tydzień przez ~270 000 lat, żeby statystycznie oczekiwać jednego jackpota
+
+
+# Liczymy - Solo mining
+
+W przypadku solo miningu musimy najpierw lepiej zrozumieć, jak działa to tajemnicze "rozwiązywanie zagadek". Dla mnie zawsze brzmiało to jak jakieś zadanie rodem z fizyki jądrowej, które uzasadnia użycie tak ogromnej mocy obliczeniowej. I które uzasadnia skoki cen kart graficznych akurat wtedy, gdy musiałem kupić jedną w 2019 roku (teraz to samo dzieje się z cenami pamięci RAM przez LLM-y).
+
+### Haszowanie - fundament kopania
+
+Okazuje się, że to nie jest skomplikowane. Cały proces opiera się na haszowaniu. Funkcje haszujące przyjmują na wejściu dane dowolnego rozmiaru i zwracają dane o stałym rozmiarze. Mają wiele zastosowań, ale są szczególnie popularne w kryptografii dzięki jednej właściwości - są nieodwracalne, co oznacza, że nie da się odzyskać danych wejściowych na podstawie wyniku. Jedna popularna i istotna dla naszej dyskusji funkcja haszująca to SHA-256 (Secure Hash Algorithm; 256, bo zawsze zwraca 256 bitów na wyjściu; lub 64 w zapisie szesnastkowym). Poniżej kilka przykładów działania tej funkcji:
+
+```python
+SHA256('short input') =
+9a200a1b21abbd44409feb953026612cefe3f31bd35ff1c4b7b45ede7ce4f76f
+SHA256('short inputs') =
+61ca78ec5b9849ad28dbf593dd9edcd780ea67c4cd936eb3f6721d7b80694fa8
+SHA256('and this is longer input') =
+e175aea5ffc33e3458472cc5dc42a8a906d1deecd09eea65f123f84f77f1d046
+```
+
+Widać tu dwie pożądane właściwości. Po pierwsze, we wszystkich przypadkach długość wyniku jest taka sama. Po drugie, nawet mała zmiana danych wejściowych prowadzi do zupełnie innego wyniku.
+
+### Zrozumienie procesu kopania
+
+Wróćmy teraz do naszego przypadku Bitcoin. Jak wspomniano wcześniej, górnicy starają się dodać nowy blok transakcji Bitcoin do blockchain (historii transakcji). Jak właściwie to robią?
+Konstruują nagłówek nowego bloku, który zawiera metadane o bloku i podsumowanie jego transakcji. Taki nagłówek zawiera:
+- wersję (sygnalizuje, które reguły powinny być użyte do walidacji)
+- hash poprzedniego bloku
+- Merkle root (hash podsumowujący wszystkie transakcje w bloku)
+- znacznik czasu
+- cel trudności (kompaktowa reprezentacja wartości docelowej)
+- **nonce**
+
+Nonce jest tu kluczowy, ponieważ to główna wartość, którą górnicy wielokrotnie zmieniają podczas procesu.
+Celem jest zahaszowanie całego nagłówka bloku tak, aby miał pożądane właściwości.
+Jakie są te pożądane właściwości zdefiniowane przez cel trudności?
+W zasadzie te wymagania określają, jak mały musi być hash. Często tłumaczy się to tak, że hash musi mieć określoną liczbę zer na początku (na przykład
+`000000a5ffc33e3458472cc5dc42a8a906d1deecd09eea65f123f84f77f1d046` ma sześć zer na początku).
+Technicznie rzecz biorąc, reguła mówi, że hash musi być numerycznie mniejszy od wartości docelowej, ale użycie zer na początku jest wygodnym uproszczeniem.
+
+Proces kopania ma wiele niuansów, ale do dalszej dyskusji wystarczy taka reprezentacja:
+1. zmień wartość nonce w nagłówku bloku
+2. weź cały nagłówek bloku i zastosuj do niego funkcję SHA-256, aby uzyskać hash
+3. zastosuj SHA-256 ponownie na hashu z poprzedniego kroku
+4. sprawdź, czy hash spełnia wymagania (ma wystarczającą liczbę zer na początku)
+5. powtarzaj proces, aż uzyskasz prawidłowy hash lub ktoś inny go znajdzie
+
+### Składamy wszystko razem
+
+Zacznijmy od prawdopodobieństwa wygrania "głównej nagrody", czyli znalezienia pojedynczego bloku wartego 3.125 BTC.
+Na podstawie mechaniki kopania Bitcoina intuicyjnie wiadomo, że im więcej hashy możesz sprawdzić, tym wyższa szansa na znalezienie tego właściwego.
+Ta miara nazywa się hashrate - mówi, ile hashy możesz sprawdzić na sekundę.
+Urządzenie, które kupiłem, ma hashrate 1000 KH/s. Oznacza to, że może sprawdzić 1 milion hashy na sekundę.
+Brzmi nieźle, ale musimy porównać to z hashrate sieci, czyli hashrate wszystkich górników/urządzeń próbujących znaleźć blok.
+W ostatnich miesiącach wynosi on około 1 ZH/s (zettahashe). Przedrostek zetta oznacza $10^{21}$. Więc nasze prawdopodobieństwo to:
+
+$$
+P(single\ block) = \frac{Your\ device\ hashrate}{Network\ hashrate} = \frac{10^6}{10^{21}} = 10^{-15} = 0.0000000000001\\%
+$$
+
+
+Aby obliczyć wartość oczekiwaną pojedynczego bloku, mnożymy to prawdopodobieństwo przez nagrodę i odejmujemy koszty prądu (na tym etapie możemy pominąć koszt zakupu urządzenia).
+Nagroda to 3.125 BTC (pomińmy opłaty transakcyjne, które by ją zwiększyły). To 1 030 000 PLN na dzień dzisiejszy.
+1 kWh kosztuje około 1 PLN. To 0.00017 PLN za średni czas znalezienia pojedynczego bloku (10 minut).
+
+$$
+NEV(single\ block) = (0.0000000000001\\% * 1\ 030\ 000\ PLN) - 0.00017\ PLN = \newline
+= -0.00016999897\ PLN
+$$
+
+Czyli w zasadzie oczekiwana wartość netto dla pojedynczego bloku to koszt prądu potrzebnego do zasilania urządzenia.
+
+A co z horyzontem 10-letnim, jak początkowo założyliśmy?
+W ciągu 10 lat powstanie 525 960 bloków. To daje nam oczekiwane $5.26*10^{-10}$ bloków (0.000000000526).
+Nagroda za znalezienie bloku zmienia się mniej więcej co cztery lata. Dokładniej, zmniejsza się o połowę (to zdarzenie nazywa się Bitcoin Halving). Ostatni halving był w 2024, więc możemy założyć, że nagroda wyniesie 3.125 do 2028, potem spadnie do 1.5625, a w 2032 do 0.78125. Więc na najbliższe 10 lat możemy przyjąć nagrodę 1.5625 (średnia ważona).
+
+Jeśli chodzi o koszty, musimy tu uwzględnić zarówno prąd, jak i koszt urządzenia. Pierwszy wyniesie 87.6 PLN, a drugi 150 PLN. Uwaga spoiler: oczekiwana wypłata nadal jest bliska zeru, więc w obliczeniach znów zobaczymy tylko część kosztową:
+
+$$
+NEV(in\ 10\ years) = 5.26*10^{-10} * 1.5625 * 330000 - (87.6+150) = \newline
+= -237.5997\ PLN
+$$
+
+A założenia, które przyjąłem, są raczej optymistyczne, ponieważ zakładam stały koszt prądu, stałą cenę Bitcoina i stały hashrate sieci. Nie wspominając o tym, że z mojego doświadczenia wynika, iż to urządzenie nie jest najstabilniejsze - często traci połączenie z siecią i przez to nie uczestniczy nieprzerwanie w procesie kopania.
+
+> Trzy ciekawostki:
+> - dla naszego urządzenia oczekiwany czas znalezienia jednego bloku to ~19 miliardów lat (to dłużej niż wiek wszechświata!)
+> - nasze urządzenie musiałoby haszować 800000x szybciej, przy tych samych kosztach, żeby wyjść na zero w okresie 10 lat
+> - można spróbować kopać Bitcoina ręcznie. [Ktoś to zrobił](https://www.righto.com/2014/09/mining-bitcoin-with-pencil-and-paper.html?m=0) i przełożyło się to na moc obliczeniową 0.67 hashy **dziennie**
+
+# Podsumowanie
+
+No i mamy to. Teraz szanse w obu grach są skwantyfikowane i werdykt jest jasny.
+Nic dziwnego, że w obu przypadkach wygrana jest skrajnie mało prawdopodobna, nawet w perspektywie 10 lat.
+Liczbowo rzecz biorąc, masz większą szansę na wygranie jackpota w Lotto, ale jeśli chcesz zminimalizować stracone pieniądze, warto rozważyć solo mining.
+Na zakończenie tego artykułu zastanówmy się nad innymi czynnikami, które przyciągają ludzi do gier losowych.
+
+W przypadku Lotto sądzę, że to zjawisko "prawie trafień" utrzymuje zaangażowanie graczy. Trafienie czterech z sześciu liczb wywołuje w mózgu reakcje podobne do faktycznej wygranej. I tworzy to iluzję, że jesteś coraz bliżej, zapominając, że każda próba jest niezależna.
+Ta struktura okazjonalnych małych nagród jest szczególnie silna. Zmienne, nieprzewidywalne nagrody są dla ludzkiego mózgu bardziej pociągające niż stałe. To ten sam mechanizm, który sprawia, że scrollowanie mediów społecznościowych jest tak wciągające. Nigdy nie wiesz, co ciekawego pojawi się dalej, co podtrzymuje zainteresowanie i oczekiwanie.
+I z pewnością pewną rolę odgrywa element osobistych przesądów, jak szczęśliwe liczby czy jakieś rytuały (pamiętam, jak ojciec prosił mnie o wybranie jednej liczby na jego kuponie).
+
+W przypadku solo miningu pewnie są ludzie kierowani pobudkami ideologicznymi, którzy robią to, aby uczestniczyć w bezpieczeństwie sieci i zachować decentralizację. Dajcie spokój, robią to z chciwości (wstaw zdjęcie Gordona Gekko). Chyba że masz dużą koparkę Bitcoina, to w zasadzie Lotto na sterydach.
+Plusem jest niski koszt uczestnictwa, zarówno pod względem urządzenia, jak i zużycia energii. Tworzy to psychologiczny urok nadziei i możliwości - łatwo to usprawiedliwić jako "kupowanie marzenia" za kilka złotych.
+I nie zapominajmy o błędzie dostępności, czyli przecenianiu prawdopodobieństwa rzeczy, które łatwo sobie przypominamy. Wygrane na loterii przyciągają znaczną uwagę mediów, co czyni je zapadającymi w pamięć, jak [ten niedawny przykład](https://forklog.com/en/solo-miner-strikes-bitcoin-block-earns-264558/) solo minera, który znalazł blok.
+
+Czy planuję dalej grać w którąś z tych gier? Nie. Mam wrażenie, że pisanie o tym i obliczanie prawdopodobieństw wyleczyło mnie z prób.
+
+Ale może jestem o jeden kupon od wygranej...?

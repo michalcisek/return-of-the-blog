@@ -117,6 +117,32 @@ img {
   border-color: var(--text-secondary);
 }
 
+/* Language toggle */
+.lang-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.lang-option {
+  display: flex;
+  align-items: center;
+  opacity: 0.35;
+  transition: opacity 0.2s;
+  border-radius: 2px;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.lang-option:hover {
+  opacity: 0.7;
+  text-decoration: none;
+}
+
+.lang-option.active {
+  opacity: 1;
+}
+
 /* Footer */
 .site-footer {
   margin-top: 4rem;

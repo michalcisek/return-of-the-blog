@@ -1,0 +1,239 @@
+---
+date: '2025-07-12T08:00:54+02:00'
+draft: false
+lang: 'pl'
+title: 'Jak daleko jest najbliższy piorun?'
+ShowToc: false
+ShowReadingTime: true
+cover:
+  image: "./cover3.png"
+---
+
+import CenteredImage from '../../../components/CenteredImage.astro';
+
+*Wyobraź sobie gorący, letni dzień. Siedzisz w domu, powietrze jest duszne. Zaczynasz się zastanawiać, czy dzisiaj będzie burza.*
+
+*Mógłbyś sprawdzić na ulubionej stronie, gdzie na mapie uderzają pioruny.*
+
+*Ale nie — Ty chcesz wiedzieć, jak daleko od Ciebie uderzył ostatni piorun. I chcesz to wiedzieć precyzyjnie, natychmiast, bez kiwnięcia palcem.*
+
+*Brzmi jak realistyczny scenariusz, prawda? No prawda?*
+
+*Do dzieła!*
+
+# Wstęp
+
+Od kilku lat z rzędu chodziło mi po głowie stworzenie aplikacji, która pokazywałaby mi odległość do najbliższego pioruna. Możesz zapytać: po co? Odpowiedź brzmi: nie wiem… z jakiegoś powodu wydaje mi się to po prostu mega fajne.
+
+Jak to zwykle z moimi pomysłami na boczne projekty — nie miałem czasu, żeby się za to zabrać. Aż do tego roku, kiedy w końcu usiadłem i zrobiłem coś fajnego (przynajmniej dla mnie).
+
+# Sposób łatwy, ale drogi
+
+Oczywiście najprostszym pomysłem byłoby skorzystanie z jakiegoś API, które zwraca dane o ostatnich wyładowaniach atmosferycznych wraz z geolokalizacją, a następnie użycie tych danych do obliczenia odległości do najbliższego pioruna od Twojej lokalizacji. Na koniec wystarczyłoby wyświetlić tę informację na jakimś dashboardzie.
+
+Takie serwisy istnieją, ale nie są darmowe (a właściwie są cholernie drogie, choć wyobrażam sobie, że dokładne dane pogodowe mogą być pożądane w wielu branżach). Tak czy inaczej, żeby zobaczyć jak takie dane wyglądają, skorzystałem z darmowego okresu próbnego Meteomatics API, które daje dostęp do tego typu danych. Definiujesz parametry zapytania:
+obszar geograficzny, w którym chcesz szukać wyładowań, oraz przedział czasowy. W wyniku dostajesz coś takiego:
+
+```json
+[
+    {
+        "stroke_time:sql":"2024-09-01T17:45:20Z",
+        "stroke_lat:d":"38.845",
+        "stroke_lon:d":"-80.8603",
+        "stroke_current:kA":"-18.2",
+        "lightning_type":"2"
+    },
+    {
+        "stroke_time:sql":"2024-09-01T17:45:33Z",
+        "stroke_lat:d":"35.7407",
+        "stroke_lon:d":"-86.8738",
+        "stroke_current:kA":"21.7",
+        "lightning_type":"2"
+    }
+]
+```
+
+Od tego momentu uzyskanie tego, czego chciałem, to już bułka z masłem.
+
+# Sposób trudny, ale fajny
+
+Ale na taki pet project nie chcę wydawać fortuny na dane. Więc jakie są alternatywy? Myślę, że wiele osób zna stronę blitzortung.org. Wyświetlają mapę piorunów w czasie rzeczywistym.
+
+Udostępniają też API, ale niestety jest ono dostępne wyłącznie dla członków ich społeczności, czyli osób będących częścią sieci detektorów wyładowań. Żeby zostać takim członkiem, trzeba posiadać odpowiedni sprzęt, który aktualnie nie jest dostępny w sprzedaży (przynajmniej tak było jakiś czas temu, kiedy próbowałem go zamówić).
+
+<details class="admonition">
+<summary>Wiecej dla ciekawskich</summary>
+
+Jeśli znasz się na web scrapingu, bez problemu odkryjesz, w jaki sposób strona pobiera dane o piorunach w czasie rzeczywistym. Wykorzystują protokół komunikacji WebSocket, a dane wyglądają mniej więcej tak:
+
+<CenteredImage src={import('./website_ws.png')} alt="Data retrieved by website" maxWidth="600px" description="Data retrieved by website" />
+
+Jak widać, na pewno są tam informacje o znaczniku czasowym, długości i szerokości geograficznej, ale są one zaciemnione. Oczywiście nie chcą, żebyś podkradał ich dane.
+
+Więc nawet gdybyś mógł uzyskać dostęp do WebSocket, i tak musiałbyś te dane zdekodować.
+Gwarantuję, że da się to zrobić, ale to nadużycie ich API, więc nie zamierzam iść tą drogą.
+
+</details>
+
+
+Mam nadzieję, że do tego momentu przekonałem Cię, że uzyskanie dostępu do tego typu danych nie jest trywialne (ani darmowe). Chyba że... wykorzystasz to, co już masz. Zapnij pasy.
+
+Mamy dostęp do strony internetowej wyświetlającej ostatnie pioruny (dzięki blitzortung.org lub dowolnej innej podobnej stronie). Pioruny są tam reprezentowane jako małe krzyżyki — środek krzyżyka to faktyczna lokalizacja wyładowania.
+
+Myśląc logicznie, strona musi korzystać z jakiegoś mapowania, które przekształca długość i szerokość geograficzną pioruna pobraną przez przeglądarkę z API na pozycję piksela na mapie.
+
+
+Znając to mapowanie, moglibyśmy:
+1. zrobić zrzut ekranu mapy
+2. wyodrębnić lokalizacje krzyżyków (jako pozycje pikseli na mapie)
+3. przekształcić pozycje pikseli na współrzędne geograficzne
+4. obliczyć odległość do Twojej lokalizacji
+
+Brzmi jak solidny plan spełniający wymagania zdefiniowane na początku wpisu. Zaimplementujmy go krok po kroku.
+
+### 1. Zrzut ekranu mapy
+
+Chcemy, żeby to zadanie wykonywało się automatycznie. Potrzebujemy więc narzędzia do automatyzacji przeglądarki. Selenium świetnie się do tego nadaje, a sam proces jest bardzo prosty. Chcemy:
+- otworzyć przeglądarkę
+- obsłużyć wszelkie pop-upy z ciasteczkami i reklamy
+- wyłączyć przyciski wyładowań i detektorów (bo w przeciwnym razie nasz zrzut ekranu mógłby zawierać zbyt dużo szumu)
+- zlokalizować element strony z mapą i zrobić jego zrzut ekranu
+
+Wszystkie te punkty są trywialne do wykonania.
+
+Pierwszy wymaga jedynie zdefiniowania przeglądarki, którą chcesz uruchomić, z opcjonalnymi parametrami, jak np. tryb headless (tryb headless oznacza uruchomienie przeglądarki bez jej wyświetlania).
+
+Dla drugiego i trzeciego punktu musisz znaleźć definicje przycisków, które chcesz kliknąć (np. za pomocą CSS selector) — możesz sprawdzić źródło strony lub skorzystać z funkcji "zbadaj element" w przeglądarce. Następnie każ Selenium znaleźć te przyciski i je kliknąć.
+
+Myślałem, że ostatni punkt będzie trudniejszy, ale tak naprawdę znowu wystarczy znaleźć nazwę elementu zawierającego mapę i użyć komendy w stylu:
+
+```python
+map_element_name = "#map td:nth-child(1)"
+img_element = driver.find_element(By.CSS_SELECTOR, map_element_name)
+img_element.screenshot("/path/to/save/image")
+```
+
+To skutecznie rozwiązuje ten punkt i zapisuje mapę jako plik PNG.
+
+### 2. Wyodrębnianie pozycji białych krzyżyków
+
+Najpierw trzeba wczytać mapę w Pythonie. Można to zrobić na przykład za pomocą biblioteki OpenCV.
+
+Otrzymujesz macierz 3D o wymiarach `width` x `height` x `channels`. Najczęściej liczba kanałów wynosi 3, a każdy z nich odpowiada intensywności koloru niebieskiego, zielonego i czerwonego.
+
+<CenteredImage src={import('./output1.png')} alt="image" maxWidth="600px" description="Figure 1: raw map loaded in Python " />
+
+Jak widać, mamy 6 kolorów krzyżyków, na skali od białego do czerwonego (białe to najnowsze, czerwone to najstarsze wyładowania). Chcemy wyodrębnić tylko te białe.
+
+Na tym etapie miałem różne pomysły, jak do tego podejść. Głównie przekombinowane.
+
+Wiedziałem, że na tej mapie krzyżyk pioruna ma 7x7 pikseli. Więc potencjalnie można by stworzyć szablon takiego pioruna (macierz 7x7 z jedynkami w 4. wierszu i 4. kolumnie, zerami w pozostałych elementach), przesuwać go po obrazie i sprawdzać, jak ten szablon pasuje do każdego fragmentu 7x7 (pewna forma operacji konwolucyjnej znanej w wizji komputerowej). W OpenCV istnieje gotowa metoda `cv2.matchTemplate`. Działała całkiem dobrze, ale tylko dla pojedynczych piorunów. Kiedy w bliskim sąsiedztwie znajdowały się 2 lub więcej wyładowania (czyli krzyżyki nakładały się na siebie), podejście szablonowe nie działało.
+
+Na szczęście jest lepszy sposób. Po pierwsze, możemy uprościć obraz. Zamiast 3 kanałów, niech będzie jeden. To pomoże nam wybrać próg jasności do wyłapania białych krzyżyków. W tym celu możemy przekształcić obraz ze skali RGB na skalę szarości (czarno-białą). Jak widać poniżej, teraz obraz jest łatwiejszy w obróbce. Każdy piksel jest zakodowany jako wartość od 0 do 255. Im wyższa wartość, tym piksel jest bardziej biały.
+
+<CenteredImage src={import('./output2.png')} alt="image" maxWidth="600px" description="Figure 2: map after transforming to grayscale " />
+
+Teraz wystarczy wybrać próg, powyżej którego uznajemy, że piksel jest "wystarczająco biały" (:D), żeby reprezentować krzyżyk. Jak się okazuje po sprawdzeniu wartości obrazu, próg powinien wynosić 240. Więc ponownie przekształcamy obraz, tym razem do postaci binarnej. Wartość piksela może wynosić 0 (nie-biały) lub 1 (biały).
+
+<CenteredImage src={import('./output3.png')} alt="image" maxWidth="600px" description="Figure 3: map with white pixels selected " />
+
+Na tym etapie, znowu, cel można osiągnąć na wiele sposobów. Wybrałem ten najbardziej trywialny. Żeby wykryć biały krzyżyk, po prostu iterujesz po wszystkich pikselach. Dla każdego piksela sprawdzasz jego sąsiadów — piksel po lewej, po prawej, poniżej i powyżej. Jeśli wszystkie mają wartość 1 (czyli są białe) — masz piksel reprezentujący piorun!
+
+<details class="admonition">
+<summary>Wiecej dla ciekawskich</summary>
+
+Pewnie zauważasz, że wyodrębnione zostały nie tylko krzyżyki, ale też dodatkowe informacje wyświetlane przez stronę, widoczne w lewym górnym, prawym górnym i prawym dolnym rogu. Te dane generowałyby fałszywe pioruny, których nie chcemy wykrywać.
+
+Na szczęście pozycja tych metadanych się nie zmienia, więc można z dużą pewnością zdefiniować prostokąty obejmujące te obszary i wykluczyć je z dalszej analizy.
+
+</details>
+
+
+### 3. Przekształcenie pozycji pikseli na współrzędne geograficzne
+
+Mamy więc współrzędne pikselowe odpowiadające piorunom. Chcemy je przekształcić na współrzędne geograficzne.
+
+Gdybyś był naprawdę, ale to naprawdę leniwy, i znałbyś współrzędne rogów mapy (lewy górny, dolny, prawy górny, dolny), mógłbyś TEORETYCZNIE założyć, że każdy piksel odpowiada stałej odległości, i na tej podstawie przeliczyć pozycję piksela na lokalizację geograficzną.
+
+To oczywiście ogromne uproszczenie, ale hej, da się to zrobić, a wyniki dla takiej mapy jak nasza nie byłyby aż tak niedokładne. Na tym etapie nie znałem współrzędnych rogów mapy. Ale zawsze można porównać naszą mapę z Google Maps, żeby przybliżyć lokalizacje czterech rogów. Zrobiłem to ćwiczenie, żebyś Ty nie musiał. Działało, ale wyniki w porównaniu z oficjalnym źródłem danych (Meteomatics API, o którym wspominałem wcześniej) odbiegały nawet o kilkadziesiąt kilometrów.
+
+To oczywiście "za mało" jak na tak ważny projekt jak ten. Najbardziej problematyczna kwestia to fakt, że nie wiemy, jak przełożyć piksel na współrzędne geograficzne. Zasadniczo nie wiemy, jaka projekcja mapy została użyta. Jeśli uważałeś na lekcjach geografii, prawdopodobnie mógłbyś zgadnąć lub oszacować, która projekcja została użyta (nie ma aż tak wielu popularnych). Ja akurat należę do grupy ludzi, którzy uważali na geografii, bo zdawałem maturę z geografii (i zdałem ją z przyzwoitym wynikiem!).
+Ale ta wiedza dawno już wyparowała.
+
+Na szczęście istnieje powiedzenie: "jeśli wystarczająco długo torturujesz dane, w końcu się do czegoś przyznają". Wiem, że zwykle używa się go w negatywnym kontekście (opisując złe praktyki statystyczne), ale tu pasuje idealnie.
+Moje rozumowanie było takie, że logika transformacji piksel->współrzędne geograficzne musi być gdzieś zawarta na stronie. Kiedy po raz pierwszy przejrzałem źródło strony, nie znalazłem takiego kodu. Ale potem zagłębiłem się bardziej i sprawdziłem też dołączone pliki JavaScript. I tam trafiłem na złoto!
+
+Okazało się, że znalazłem definicje każdej mapy dostępnej na stronie wraz z projekcjami użytymi dla każdej z nich. Co więcej, znalazłem definicje funkcji wykonujących transformację: przyjmują one na wejściu długość i szerokość geograficzną, a zwracają współrzędne pikselowe, w zależności od projekcji mapy.
+
+Od tego momentu wystarczy wziąć te funkcje i przekształcić je tak, żeby na wejściu przyjmowały współrzędne pikselowe, a na wyjściu zwracały długość i szerokość geograficzną. To nie jest trudna matematyka. Końcowy efekt to funkcje wyglądające tak:
+
+```python
+def pixel_to_lon(x, west, east, width):
+    """Invert projection_x: pixel → longitude."""
+    return west + (x * (east - west) / width)
+
+def mercator_proj(lat):
+    return math.log(math.tan(lat / 2 + math.pi / 4))
+
+def inv_mercator_proj(v):
+    return 2 * math.atan(math.exp(v)) - math.pi / 2
+
+def pixel_to_lat(y, west, east, north, height):
+    """Invert projection_y: pixel → latitude."""
+    west_rad = math.radians(west)
+    east_rad = math.radians(east)
+    north_rad = math.radians(north)
+    span = east_rad - west_rad
+
+    delta = (y * span) / height
+
+    t = mercator_proj(north_rad) - delta
+    lat_rad = inv_mercator_proj(t)
+    return math.degrees(lat_rad)
+```
+
+- zmienne `x`, `y` to pozycje pikseli
+- zmienne `west`, `east`, `north` to współrzędne granic mapy, które znalazłem w skryptach strony
+- zmienne `width`, `height` to wymiary obrazu
+
+### 4. Obliczenie odległości do Twojej lokalizacji
+
+Wszystko gotowe.
+
+Jedyne co trzeba zrobić, to obliczyć odległość między dwoma punktami: Twoją lokalizacją a najbliższym piorunem. Można to osiągnąć za pomocą wzoru Haversine. Nie będę tu udawał mądrzejszego — wzór to wzór, możesz poczytać o tym, jak działa, ale najważniejsze jest to, że podajesz dwa punkty (punkt zdefiniowany jako długość i szerokość geograficzna) i dostajesz odległość na wyjściu. Więc po prostu obliczasz ten wzór między swoją lokalizacją a wszystkimi wykrytymi piorunami, bierzesz wartość minimalną, i voila — masz odległość do najbliższego pioruna.
+
+
+Super, cała trudna (z mojej perspektywy) robota jest zrobiona. Teraz możemy wyciągnąć zabawki i trochę się pobawić.
+
+# Łączenie wszystkiego w całość
+
+Jak wspomniałem na początku artykułu: chcemy mieć wszystkie procesy zautomatyzowane, żeby na bieżąco prezentować wizualnie dane o najbliższym piorunie. Można to zrobić na wiele sposobów. Ja zamierzam to zrobić za pomocą sprzętu, który kupiłem kilka lat temu, i narzędzi, które są popularne i łatwe w konfiguracji.
+
+W przeciwieństwie do przetwarzania danych, które opisałem powyżej i które jest dość niestandardowe, nie będę tu wchodzić w szczegóły — w internecie znajdziesz mnóstwo artykułów o narzędziach, które zaraz wymienię.
+
+Plan jest następujący:
+- skonfigurować `cronjob`, który cyklicznie, np. co 5 minut, uruchamia skrypt pobierający dane o ostatnich wyładowaniach i zapisuje je w bazie `SQLite`. Będę to uruchamiać na mini-klastrze złożonym z trzech Raspberry Pi Zero, którego używam do niektórych moich bocznych projektów
+- stworzyć endpoint w `FastAPI`, który pobiera z bazy `SQLite` szczegóły o najnowszych piorunach. Uruchomić serwer `uvicorn` do hostowania tego endpointu
+- wygenerować w ChatGPT piękny obrazek przedstawiający miasto podczas burzy i użyć go w prostym dashboardzie HTML, który będzie wyświetlał dane o najbliższym piorunie
+- uruchomić dashboard na serwerze
+- przygotować sprzęt do wyświetlania dashboardu. Mam starego Raspberry Pi 3B, którego kupiłem jakiś czas temu, z ekranem 3.5 cala. Po podłączeniu Raspberry Pi do ekranu, zainstalowaniu i skonfigurowaniu systemu operacyjnego, wystarczy uruchomić przeglądarkę z adresem ustawionym na dashboard hostowany na serwerze, w trybie kiosk
+
+Wizualnie nasza architektura wygląda tak:
+
+<CenteredImage src={import('./diagram4.png')} alt="image" maxWidth="600px" description="Figure 4: architecture of our solution " />
+
+A efekt końcowy jest następujący. Poniżej możesz zobaczyć zrzut ekranu aplikacji. Oprócz odległości do najbliższego pioruna wyświetlam też jego współrzędne, łączną liczbę wyładowań na mapie oraz datę i godzinę pobrania danych.
+
+<CenteredImage src={import('./dashboard1.png')} alt="image" maxWidth="600px" description="Figure 5: screenshot from the app " />
+
+A tak to wygląda na moim biurku:
+
+<CenteredImage src={import('./desk2_1.jpg')} alt="image" maxWidth="600px" description="Figure 5: how does it present on my desk? I'd say pretty decent " />
+
+Działa już od około 2 miesięcy. Od czasu do czasu porównuję wyniki z oryginalną mapą i wygląda na to, że działa bez zarzutu.
+
+Zaspokojenie mojej ciekawości odnośnie ostatnich piorunów nigdy nie było prostsze 😂
+
+Mam nadzieję, że było to dla Ciebie chociaż w połowie tak rozrywkowe, jak dla mnie.
+
+Na zdrowie! ✌️

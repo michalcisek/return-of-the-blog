@@ -1,6 +1,7 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import TableOfContents from '../components/TableOfContents.astro';
+import { getLangFromUrl } from '../lib/i18n';
 
 interface Props {
   title: string;
@@ -15,7 +16,8 @@ interface Props {
 
 const { title, date, showToc = false, showReadingTime = false, minutesRead, math = false, coverSrc, headings } = Astro.props;
 
-const formattedDate = date.toLocaleDateString('en-US', {
+const lang = getLangFromUrl(Astro.url.pathname);
+const formattedDate = date.toLocaleDateString(lang === 'pl' ? 'pl-PL' : 'en-US', {
   year: 'numeric',
   month: 'long',
   day: 'numeric',

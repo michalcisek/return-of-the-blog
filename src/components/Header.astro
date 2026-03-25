@@ -1,13 +1,19 @@
 ---
 import ThemeToggle from './ThemeToggle.astro';
+import LanguageToggle from './LanguageToggle.astro';
+import { getLangFromUrl } from '../lib/i18n';
+
+const lang = getLangFromUrl(Astro.url.pathname);
+const prefix = lang === 'pl' ? '/pl' : '';
 ---
 
 <header class="site-header">
   <div class="container">
-    <a href="/" class="site-title">Michal Cisek</a>
+    <a href={`${prefix}/`} class="site-title">Michal Cisek</a>
     <nav class="site-nav">
-      <a href="/about">About</a>
-      <a href="/archives">Archives</a>
+      <a href={`${prefix}/about`}>{lang === 'pl' ? 'O mnie' : 'About'}</a>
+      <a href={`${prefix}/archives`}>{lang === 'pl' ? 'Archiwum' : 'Archives'}</a>
+      <LanguageToggle />
       <ThemeToggle />
     </nav>
   </div>

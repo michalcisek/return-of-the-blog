@@ -1,8 +1,9 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import { getPostBaseSlug } from '../../lib/i18n';
 
-const posts = (await getCollection('posts', ({ data }) => !data.draft && data.lang === 'en'))
+const posts = (await getCollection('posts', ({ data }) => !data.draft && data.lang === 'pl'))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 
 const postsByYear = posts.reduce<Record<number, typeof posts>>((acc, post) => {
@@ -16,8 +17,8 @@ const years = Object.keys(postsByYear)
   .sort((a, b) => b - a);
 ---
 
-<BaseLayout title="Archives - Michal Cisek">
-  <h1 style="margin-bottom: 2rem;">Archives</h1>
+<BaseLayout title="Archiwum - Michal Cisek">
+  <h1 style="margin-bottom: 2rem;">Archiwum</h1>
 
   {years.map((year) => (
     <section class="archive-year">
@@ -25,9 +26,9 @@ const years = Object.keys(postsByYear)
       <ul class="archive-list">
         {postsByYear[year].map((post) => (
           <li>
-            <a href={`/posts/${post.id}/`}>{post.data.title}</a>
+            <a href={`/pl/posts/${getPostBaseSlug(post.id)}/`}>{post.data.title}</a>
             <span class="archive-date">
-              {post.data.date.toLocaleDateString('en-US', {
+              {post.data.date.toLocaleDateString('pl-PL', {
                 month: 'short',
                 day: 'numeric',
               })}

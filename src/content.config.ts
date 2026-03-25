@@ -8,6 +8,7 @@ const posts = defineCollection({
       title: z.string(),
       date: z.coerce.date(),
       draft: z.boolean().default(false),
+      lang: z.enum(['en', 'pl']).default('en'),
       cover: z
         .object({
           image: image(),

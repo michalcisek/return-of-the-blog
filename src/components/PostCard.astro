@@ -1,14 +1,18 @@
 ---
+import type { Lang } from '../lib/i18n';
+
 interface Props {
   title: string;
   date: Date;
   slug: string;
   coverSrc?: string;
+  lang?: Lang;
 }
 
-const { title, date, slug, coverSrc } = Astro.props;
+const { title, date, slug, coverSrc, lang = 'en' } = Astro.props;
+const prefix = lang === 'pl' ? '/pl' : '';
 
-const formattedDate = date.toLocaleDateString('en-US', {
+const formattedDate = date.toLocaleDateString(lang === 'pl' ? 'pl-PL' : 'en-US', {
   year: 'numeric',
   month: 'long',
   day: 'numeric',
@@ -16,7 +20,7 @@ const formattedDate = date.toLocaleDateString('en-US', {
 ---
 
 <article class="post-card">
-  <a href={`/posts/${slug}/`}>
+  <a href={`${prefix}/posts/${slug}/`}>
     {coverSrc && <img class="post-card-cover" src={coverSrc} alt={title} loading="lazy" />}
     <div class="post-card-body">
       <h2 class="post-card-title">{title}</h2>

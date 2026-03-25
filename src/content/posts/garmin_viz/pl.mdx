@@ -1,0 +1,268 @@
+---
+date: '2025-09-08T10:56:34+02:00'
+draft: false
+lang: 'pl'
+title: 'Czy dane z biegania mogą stać się dekoracją wnętrza?'
+ShowToc: false
+ShowReadingTime: true
+cover:
+  image: "./cover2.webp"
+---
+
+import CenteredImage from '../../../components/CenteredImage.astro';
+
+*Mam w domu kilka plakatów przedstawiających miasta, które z różnych powodów są dla mnie ważne. To dość popularne plakaty - zerknijcie na Rysunek 1.*
+
+*Od pewnego czasu zastanawiałem się, jak można by takie plakaty spersonalizować. Jednym z pomysłów było zaznaczenie ważnych miejsc na mapie - miejsc, w których mieszkałem, miejsc ważnych z perspektywy związku albo ulubionych lokali do picia...*
+
+*Ale to nie byłoby zbyt ciekawe jako materiał na wpis na blogu, prawda? A jako aspirujący twórca internetowy czuję się zobowiązany dostarczyć coś angażującego.*
+
+*Wpadłem więc na pomysł, że naprawdę fajnie byłoby wykorzystać dane, które zbieram za pomocą smartwatcha - dane o moich aktywnościach biegowych.*
+
+*Idea jest prosta - chcę podrasować plakat z mapą Warszawy. Dlaczego Warszawa? Bo tu mieszkam i tu odbywa się zdecydowana większość moich treningów biegowych.*
+
+*Chcę zachować siatkę dróg w takiej formie, jaka jest. Ale oprócz tego chcę wyróżnić te odcinki dróg, których używałem podczas biegania. Większość odcinków będzie miała domyślny czarny kolor, oznaczający, że tamtędy nie biegałem. Ale niektóre z nich będą miały inny kolor, oznaczający, że tam biegałem. I nie będzie to jeden kolor, lecz pewien gradient kolorów (np. różne odcienie niebieskiego) - im ciemniejszy kolor, tym częściej tamtędy biegałem.*
+
+*Sprawmy, żeby ten plakat znów był wielki.*
+
+<CenteredImage src={import('./pic1.jpg')} alt="image" maxWidth="600px" description="Figure 1: my poster with Warsaw map" />
+
+# Dane
+
+Od ponad 7 lat mam zegarek Garmin, który noszę codziennie. Choć nie jestem maratończykiem, biegam dość regularnie od czasów nastoletnich. Oznacza to, że powinno być całkiem sporo danych do wyświetlenia.
+Zegarki Garmin produkują pliki `.fit`, które zawierają wszystkie szczegóły dotyczące aktywności, w tym surowe współrzędne GPS zbierane w regularnych odstępach. Problem polega na tym, że prawdopodobnie nie uda się pobrać wszystkich plików bezpośrednio z zegarka - obowiązuje pewna polityka przechowywania danych na zegarku, oparta na limicie pamięci lub wieku aktywności. Na szczęście można wejść na stronę Garmin Connect i tam znaleźć pełną historię aktywności.
+Tu pojawia się kolejne wyzwanie - nie da się pobrać wszystkich aktywności naraz. Można pobrać jedynie podsumowanie wszystkich aktywności, ale nie zawiera ono danych GPS.
+Trzeba przejść przez wszystkie aktywności i dla każdej z nich kliknąć kilka przycisków, żeby pobrać plik `.zip` ze wszystkimi potrzebnymi danymi. Dość czasochłonne przy kilkuset aktywnościach do pobrania, jeśli mnie pytacie. Ale można napisać prosty skrypt automatyzujący ten proces - i tak właśnie zrobiłem. Skończyłem z około 800 aktywnościami biegowymi, gotowymi do dalszej analizy.
+
+<details class="admonition">
+<summary>Wiecej dla ciekawskich</summary>
+
+Jest pewna ciekawostka dotycząca danych Garmina.
+
+Kiedy je wczytasz (ja użyłem pakietu `fitparse` w Pythonie), punkty GPS nie są od razu gotowe do użycia.
+Garmin używa specjalnego formatu przechowywania współrzędnych geograficznych, który jest wydajny pamięciowo. Zamiast przechowywać długość i szerokość geograficzną jako stopnie dziesiętne, zapisuje je jako mniejsze liczby całkowite.
+Jednostka ta nazywa się "semicircles". Aby użyć ich w standardowej analizie geoprzestrzennej, trzeba je przekonwertować na stopnie.
+
+Wzór jest następujący: `semicircles = degrees * (2^31 / 180)`
+
+</details>
+
+# Wizualizacja surowych punktów GPS
+
+Po wczytaniu danych musimy odfiltrować tylko te aktywności, które miały miejsce w Warszawie.
+Następnie, żeby sprawdzić, z czym mamy do czynienia, możemy wziąć surowe punkty GPS i połączyć je w linię (a właściwie polilinię) - jedną linię na aktywność.
+Na *Rysunku 2* można zobaczyć taką wizualizację.
+
+<details class="admonition">
+<summary>Wiecej dla ciekawskich</summary>
+
+Jak można przekształcić surowe punkty GPS w polilinie reprezentujące trasę biegową?
+Można użyć kombinacji bibliotek `geopandas` i `shapely`.
+Załóżmy, że mamy ramkę danych `pandas` z informacjami o aktywności (kolumna "activity_id") i punktach GPS (kolumny "lat" i "lon").
+Aby poprawnie odwzorować te punkty GPS, można uruchomić:
+```python
+import geopandas as gpd
+from shapely.geometry import LineString
+
+gdf_points = gpd.GeoDataFrame(
+   points_df,
+   geometry=gpd.points_from_xy(points_df["lon"], points_df["lat"]),
+   crs="EPSG:4326"
+)
+```
+Następnie, aby utworzyć polilinię dla każdej aktywności, można użyć klasy `LineString`:
+```python
+lines = []
+for act_id, group in gdf_points.groupby("activity_id"):
+   line_geom = LineString(list(group.geometry))
+   lines.append({"activity_id": act_id,
+                 "n_points": len(group),
+                 "geometry": line_geom})
+gdf_lines = gpd.GeoDataFrame(lines, crs="EPSG:4326")
+```
+Mając to, można stworzyć wizualizację podobną do *Rysunku 2*, na przykład za pomocą pakietu `folium`.
+
+</details>
+
+<CenteredImage src={import('./raw_gps_points.png')} alt="image" maxWidth="600px" description="Figure 2: map with all GPS points" />
+
+To już robi spore wrażenie, ale dla naszych celów to za mało. Dlaczego? Głównie z powodu niedokładności GPS. Spójrzcie na okolicę mojego starego mieszkania na *Rysunku 3*.
+
+<CenteredImage src={import('./issue_raw_points.png')} alt="image" maxWidth="600px" description="Figure 3: main issue with displaying raw points" />
+
+Czy naprawdę biegałem za każdym razem tak różnie na tym odcinku drogi? Zdecydowanie nie.
+W rzeczywistości trasa biegowa na tym odcinku była za każdym razem taka sama, bo to było wąskie przejście. I znajdowało się w pobliżu dość wysokiego budynku - co prawdopodobnie powodowało większość niedokładności w tym miejscu (choć powodów niedokładności GPS może być znacznie więcej).
+
+Więc jak takie "kluski" wyglądałyby wiszące na ścianie jako plakat? Niezbyt dobrze.
+
+Zaraz przejdziemy do tego, jak możemy to poprawić, ale mimo wszystko taka wizualizacja jest bardzo fajna i dość nostalgiczna. Jestem zaskoczony, jak dokładnie jestem w stanie przypomnieć sobie daną sesję biegową, patrząc na taką mapę.
+
+Poniżej znajdziecie kilka z nich. *Rysunek 4* pokazuje aktywności sprzed około 6-7 lat, kiedy zacząłem biegać po dłuższej przerwie. Był mroźny styczeń i mogłem pokonywać jedynie krótkie trasy. Ale dobrze to pamiętam, bo pozwoliło mi to poznać piękne uliczki dzielnicy Bielany w zaśnieżonej scenerii.
+
+<CenteredImage src={import('./story1.png')} alt="image" maxWidth="600px" description="Figure 4: exploring Bielany district" />
+
+*Rysunek 5* pokazuje aktywności z okresu, gdy mieszkałem w pobliżu świetnego parku i byłem bardzo konsekwentny, jeśli chodzi o bieganie trasami wokół niego.
+
+<CenteredImage src={import('./story2.png')} alt="image" maxWidth="600px" description="Figure 5: going for Local Legend status in this park" />
+
+
+Kiedy patrzymy na mapę, widać, że wszystkie aktywności są jakoś połączone w jedną dużą sieć. Ale jest też kilka odcinków, które nie są z nią połączone.
+Reprezentują one głównie biegi wyścigowe, w których brałem udział, jak na *Rysunku 6*.
+
+<CenteredImage src={import('./story3.png')} alt="image" maxWidth="600px" description="Figure 6: some 5km running race" />
+
+A tu mamy dwie ciekawe rzeczy: widoczne jako dziwne zygzaki.
+
+Pierwszy wygląda, jakbym biegał wewnątrz centrum handlowego, i to jest prawda, bo kiedyś przypadkowo uruchomiłem "trening na zewnątrz" na zegarku, a tak naprawdę biegałem na bieżni.
+
+Drugi zygzak to jedyny raz, gdy mój zegarek oszalał i uznał, że teleportuję się przez to rondo (ale hej, przynajmniej odnotował tę aktywność jako moje najlepsze 5 km!).
+
+<CenteredImage src={import('./story4.png')} alt="image" maxWidth="600px" description="Figure 7: forced and unforced watch errors" />
+
+Jak wspomniałem, to bardzo fajna wizualizacja, pokazująca wiele różnych historii. Zauważcie, że większość biegów odbywała się na północy Warszawy, a nie na południu (choć to powinno się zmienić w przyszłości). I prawie żadne po prawej stronie Wisły (to raczej się nie zmieni w przyszłości).
+
+Ale wyraźnie widać, że potrzebne są ulepszenia - przejdźmy do nich.
+
+# Dopasowywanie punktów GPS do sieci drogowej
+
+Aby uzyskać schludną i porządną grafikę, bez "klusek" w okolicach pewnych miejsc, musimy przyporządkować punkty GPS do odcinków dróg, które faktycznie zostały wykorzystane.
+
+Istnieje wiele podejść do takiego przyporządkowania. Opiszę dwa, które zastosowałem:
+- trywialne, które szybko staje się przytłaczające
+- skomplikowane, które szybko okazuje się trywialne
+
+## Podejście 1 - przyciągnij punkty do najbliższej krawędzi
+
+Ważne jest, żeby zacząć od tego, że sieci drogowe są reprezentowane jako grafy.
+Graf to zbiór krawędzi i węzłów, i jest naturalnym sposobem modelowania/reprezentowania faktu, że pewne obiekty są ze sobą powiązane.
+Na przykład graf może reprezentować grupę ludzi z pewnymi relacjami (więzi rodzinne, przyjaźnie itp.). W takim przykładzie ludzie są reprezentowani jako węzły, a te relacje to krawędzie.
+Dla sieci drogowych odcinki dróg to krawędzie, a skrzyżowania to węzły. Na *Rysunku 8* znajdziecie rzeczywisty przykład sieci drogowej - węzły to czerwone punkty, a krawędzie to czarne linie (polilinie). Dla uproszczenia uwzględniono jedynie publiczne drogi jezdne dla pojazdów silnikowych.
+
+<CenteredImage src={import('./road_network_example.png')} alt="image" maxWidth="600px" description="Figure 8: Example of road network graph" />
+
+Najprostszym pomysłem na przyporządkowanie punktów GPS do sieci drogowej jest dopasowanie każdego punktu GPS do najbliższej krawędzi.
+Zatem dla każdego punktu GPS chcemy:
+- wybrać kandydujące krawędzie blisko punktu GPS (oczywiście nie chcemy uwzględniać wszystkich krawędzi dostępnych w sieci drogowej)
+- obliczyć najbliższą odległość (w sensie odległości euklidesowej) do każdej kandydującej krawędzi
+- zwrócić krawędź z minimalną odległością
+
+Brzmi prosto i faktycznie jest proste do zaimplementowania w kilku linijkach kodu.
+
+<details class="admonition">
+<summary>Wiecej dla ciekawskich</summary>
+
+Jak to osiągnąć? W pełni za pomocą pakietu `osmnx`, który jest biblioteką Pythona do pracy z danymi OpenStreetMap.
+
+Najpierw trzeba pobrać graf reprezentujący sieć drogową za pomocą `osmnx.graph_from_place("Warsaw, Poland")`.
+
+Następnie dla każdego punktu uruchamiamy metodę `osmnx.nearest_edges()`. Wystarczy przekazać sieć drogową i współrzędne GPS.
+
+</details>
+
+Niestety jest pewien problem. Ze względu na naturę punktów GPS (są zaszumione) i dużą gęstość dróg w mieście, kończymy z bardzo dziwnym mapowaniem.
+Prawie jakbyśmy eksplorowali mapę w Wiedźminie. Albo jakbyśmy korzystali z jakiegoś portalu do teleportacji między dwoma stronami tej samej drogi.
+
+*Rysunek 9* i *Rysunek 10* precyzyjnie pokazują te problemy: dziwne błądzenie po różnych miejscach i brak ciągłości między odcinkami dróg. Aby podkreślić, jak niedokładne może być takie mapowanie, *Rysunek 10* pokazuje dodatkowo surowe punkty GPS (jako niebieskie punkty).
+
+
+<CenteredImage src={import('./issue1.png')} alt="image" maxWidth="600px" description="Figure 9: running through a park based on snapping to closest edge" />
+
+<CenteredImage src={import('./issue4.png')} alt="image" maxWidth="600px" description="Figure 10: running close to the bridge based on snapping to closest edge " />
+
+
+Jest to oczywiście nie do zaakceptowania. I oczywiście można to znacznie poprawić. Oto kilka moich pomysłów:
+- wstępne przetworzenie punktów GPS w celu: **a)** usunięcia wartości odstających (np. jeden zły odczyt w sekwencji) **b)** zmniejszenia liczby punktów, jeśli wiele jest blisko siebie **c)** zwiększenia liczby punktów przez interpolację w obszarach, gdzie są od siebie daleko **d)** zastosowania jakiegoś filtra w celu redukcji drgań GPS
+- jeśli krawędź dla nowego punktu różni się od krawędzi dla poprzedniego punktu, wybrać k-najbliższych krawędzi (zamiast jednej) i wybrać ścieżkę minimalizującą skumulowaną długość trasy od poprzedniej krawędzi przez kandydującą krawędź do następnej
+- penalizacja nadmiernych skrętów na trasie
+- próba dopasowania pewnych punktów do najbliższego węzła zamiast krawędzi
+- jeśli istnieje nieciągłość między odcinkami dróg, znalezienie najbliższej trasy między nimi, aby zamknąć lukę
+
+Wypróbowałem je wszystkie i nie byłem zadowolony z wyników. Zaletą tego podejścia jest to, że jest dość proste w implementacji, nawet z uwzględnieniem powyższych ulepszeń. Ale nie wykorzystuje w pełni wszystkich informacji dostępnych w reprezentacji grafowej, co powoduje niedoskonały wynik.
+
+## Podejście 2 - użycie Hidden Markov Models
+
+Pierwsze podejście skupiało się głównie na sekwencyjnym dopasowywaniu pojedynczych punktów GPS. Najlepiej byłoby, gdybyśmy mogli rozwiązać ten problem, biorąc pod uwagę całą sekwencję trajektorii - to powinno prowadzić do bardziej spójnych i realistycznych ścieżek.
+
+Na szczęście istnieje odpowiedni framework - Hidden Markov Models (HMM), czyli Ukryte Modele Markowa. Takie modele pozwalają nam elegancko radzić sobie z niepewnością i szumem obecnym w pozycjonowaniu GPS, jednocześnie uwzględniając ograniczenia sieci drogowej.
+
+HMM składają się z następujących elementów:
+- **Stany ukryte (Hidden States)**: definiują to, co chcemy odkryć: prawdziwe odcinki dróg, których użyłem podczas biegu
+- **Obserwacje (Observations)**: to zaszumione pomiary GPS, które mamy
+- **Prawdopodobieństwa emisji (Emission Probabilities)**: to prawdopodobieństwo otrzymania danego punktu GPS przy założeniu prawdziwych odcinków dróg. Oddaje to dokładność GPS - odcinki dróg bliższe punktowi GPS mają wyższe prawdopodobieństwo emisji, a odcinki dalsze - niższe
+- **Prawdopodobieństwa przejścia (Transition Probabilities)**: to prawdopodobieństwo przejścia z jednego odcinka drogi na inny między kolejnymi znacznikami czasu. Uwzględnia takie rzeczy jak łączność sieci drogowej i ograniczenia prędkości biegania (nie można się teleportować między niepołączonymi drogami)
+
+Sam Hidden Markov Model nie mówi nam bezpośrednio, jaka jest najbardziej prawdopodobna sekwencja stanów ukrytych (odcinków dróg). Zamiast tego definiuje model probabilistyczny (relację między ukrytymi, prawdziwymi odcinkami dróg a obserwowanymi odczytami GPS) i parametry (prawdopodobieństwa emisji i przejścia).
+Aby wyodrębnić najlepszą odpowiedź, musimy dostarczyć algorytm wnioskowania. Dla tego problemu najlepszą opcją jest algorytm Viterbiego. Zapewnia on optymalną metodę znajdowania najbardziej prawdopodobnej sekwencji stanów ukrytych. Zamiast wybierać najbardziej prawdopodobny odcinek drogi w każdym znaczniku czasu, znajduje pojedynczą najbardziej prawdopodobną ścieżkę przez sekwencję stanów ukrytych (prawdziwych odcinków dróg).
+
+Dobra, wystarczy teorii. Mam nadzieję, że wierzycie mi, że to podejście jest znacznie bardziej wyrafinowane niż pierwsze.
+Jako że jestem zbyt leniwy, żeby pisać to od zera, poszukałem gotowych rozwiązań. I znalazłem wspaniałą bibliotekę [Valhalla](https://github.com/valhalla/valhalla), która jest open source'owym scyzorykiem szwajcarskim do pracy z danymi OpenStreetMap. Moduł używany do naszego celu (map matching) nazywa się Meili.
+
+<details class="admonition">
+<summary>Wiecej dla ciekawskich</summary>
+
+Możesz postawić silnik Valhalla lokalnie (co na pewnych platformach może sprawiać problemy) albo użyć do tego `docker`:
+```bash
+docker pull ghcr.io/gis-ops/docker-valhalla/valhalla:latest
+
+docker run -dt \
+    --name "valhalla" \
+    -p 8002:8002 \
+    -e server_threads=8 \
+    -v $(pwd)/custom_files:/custom_files \
+    ghcr.io/gis-ops/docker-valhalla/valhalla:latest
+```
+
+</details>
+
+
+Konfiguracja jest dość prosta. Zmieniłem tylko 3 parametry tego algorytmu:
+- określiłem promień wyszukiwania na 50 metrów - jest to promień, w którym będą wyszukiwane odcinki dróg
+- określiłem dokładność GPS na 10 metrów (na podstawie deklaracji Garmina dotyczących dokładności)
+- ustawiłem współczynnik kary za skręt na 500, co było zalecane przez dokumentację w celu wygładzenia drgań punktów
+
+Poniżej znajdziecie porównania między podejściem 1 i 2 dla losowych aktywności (czerwona linia to podejście 1, a zielona to podejście 2; niebieskie kropki to odczyty GPS, żeby jeszcze raz udowodnić, jak niedokładne może być pierwsze podejście).
+
+*Rysunek 11* i *Rysunek 12* pokazują trasy wybrane przez silnik Valhalla.
+
+<CenteredImage src={import('./valhalla1.png')} alt="image" maxWidth="600px" description="Figure 11: running through a park according to Valhalla" />
+
+<CenteredImage src={import('./valhalla2.png')} alt="image" maxWidth="600px" description="Figure 12: running close to the bridge according to Valhalla " />
+
+Jak widać, wyniki są dokładnie takie, jakich powinniśmy oczekiwać, szczególnie w porównaniu z pierwszym podejściem (*Rysunek 9* i *Rysunek 10*).
+
+# Składamy wszystko w całość
+
+Oczywiście wybrałem drugie podejście. Teraz wystarczy uruchomić ten algorytm dla wszystkich aktywności. Konkretnie, dla każdej aktywności biegowej:
+- uruchamiamy silnik Valhalla do map matchingu
+- pobieramy unikalne odcinki dróg (dla uproszczenia zakładamy, że dany odcinek drogi mógł zostać użyty maksymalnie raz w ramach jednej aktywności)
+
+Następnie zliczamy wykorzystane odcinki dróg ze wszystkich aktywności, aby uzyskać te mniej i bardziej popularne.
+
+Teraz najtrudniejsza część - stworzenie wizualizacji na tyle estetycznej, żeby moja narzeczona pozwoliła mi to powiesić na ścianie 😂.
+
+Być może żartuję, ale mówię też całkiem poważnie. Myślę, że kod, który wygenerowałem do tej wizualizacji, był najbardziej złożonym, jaki kiedykolwiek napisałem do prezentacji danych.
+A to dlatego, że chciałem mniej więcej odwzorować plakat przedstawiony na *Rysunku 1* - ale z moimi danymi osobistymi i drobnymi ulepszeniami.
+
+Chciałem, żeby był bardziej żywy, dlatego dodałem kolory dla parków, lasów, rzeki i innych obszarów wodnych. Oryginalny kolor sieci drogowej sprawiłby, że wykorzystane odcinki dróg byłyby trudne do zobaczenia, dlatego zmieniłem go na szary.
+Dodatkowo podzieliłem odcinki dróg wykorzystane do biegania na 5 kategorii (w zależności od częstości użycia) i dobrałem odpowiednio przezroczystość koloru (im częściej używany odcinek drogi, tym ciemniejszy kolor).
+Wszystkie te zmiany przekładają się na mapę przedstawioną na *Rysunku 13*.
+
+<CenteredImage src={import('./valhalla_all_segments2.png')} alt="image" maxWidth="600px" description="Figure 13: draft of final visualization " />
+
+Mam nadzieję, że zgodzicie się, że wygląda to zachwycająco! Koniec z zygzakami i wyraźnie zaznaczone moje ulubione miejsca do biegania.
+
+Oprócz tego, aby upodobnić go do *Rysunku 1*, dokonałem następujących zmian:
+- stworzyłem dwa prostokąty wokół mapy, tak aby wewnętrzny prostokąt w pełni obejmował mapę
+- dodałem efekt stopniowego cieniowania na dole mapy. Na *Rysunku 1* widać, że od pewnego poziomu na dole mapy sieć drogowa jest coraz mniej widoczna (i, o matko, to było zaskakująco trudne do osiągnięcia)
+- dodałem taki sam podpis na dole mapy (z lepszą czcionką)
+
+Teraz wystarczy udać się do lokalnej drukarni i wydrukować to w formacie 50x70 cm (cóż, w rzeczywistości odwiedziłem 2 miejsca. Okazuje się, że wydrukowanie mapy z tyloma elementami nie jest takie proste.).
+Na koniec, *Rysunek 14* przedstawia nowy plakat na mojej ścianie.
+
+<CenteredImage src={import('./IMG_2140_1.jpg')} alt="image" maxWidth="600px" description="Figure 14: final poster hanging proudly on the wall " />
+
+Jestem naprawdę zadowolony z rezultatu.
+
+Jak wspomniałem wcześniej - przywodzi mi to kilka zabawnych wspomnień z dawnych aktywności biegowych.
+
+A poza tym, motywuje mnie to do eksplorowania nowych tras - żeby za kilka lat mieć zaktualizowaną wersję tego plakatu ;)

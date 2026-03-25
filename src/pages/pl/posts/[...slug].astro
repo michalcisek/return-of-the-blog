@@ -1,11 +1,12 @@
 ---
 import { getCollection, render } from 'astro:content';
-import PostLayout from '../../layouts/PostLayout.astro';
+import PostLayout from '../../../layouts/PostLayout.astro';
+import { getPostBaseSlug } from '../../../lib/i18n';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('posts', ({ data }) => data.lang === 'en' && !data.draft);
+  const posts = await getCollection('posts', ({ data }) => data.lang === 'pl' && !data.draft);
   return posts.map((post) => ({
-    params: { slug: post.id },
+    params: { slug: getPostBaseSlug(post.id) },
     props: { post },
   }));
 }
