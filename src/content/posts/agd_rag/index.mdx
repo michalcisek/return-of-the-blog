@@ -13,12 +13,32 @@ import CenteredImage from '../../../components/CenteredImage.astro';
 
 
 > I don't know about you but I don't like to hoard things that "might be useful" in the unspecified future.
-> It's probably a generational thing as my or my friends' parents tended to squirrel away differnt sorts of goods (past tense here might not be appropriate because they actually still do).
+> It's probably a generational thing. Our parents used to keep different sort of things because simply they were raised when there was not much around (thank you communism and centrally planned economy).
+> And right now, contrary to our parents' attitude, we try to keep our life and surroundings minimalist. 
+> 
+> At least that's my take on it.
 > So once I see that I collect something too excessively, I try to solve the problem.
-> And I noticed I have a pretty decent collection of manuals for different devices that might be useful but currently just occuppy my TV stand (Figure 1).
-The thing is that these manuals are useless until you actually need it
+> And I've recently noticed I have a pretty decent collection of manuals for different devices that "might be useful" but currently just occuppy my TV stand (Figure 1).
+> So this article is about how I could safely get rid of these documents.
 
-... so I can't just throw them away
 
-### Problem definition
+# Problem definition
 
+What's the actual problem here that stops me from simply throwing it away? The problem is that they actually might be useful in the unspecified future 😅.
+
+Once your induction hop displays some specific error it might be easier to look it up in manual you already own instead of first trying to find its exact model and then googling it.
+Or for example in my case, every few weeks I need to run self-cleaning program for my dishwasher. To do so you need to click simultaneously two buttons for few seconds.
+For some reason I'm not able to memorise those 2 buttons. I swear to God I feel like I'm clicking the right buttons, but it doesn't work until I check it in the manual.
+
+So let's agree it might not be the wisest idea to blindly put those manuals in the garbage. Simple solution? Digitalize them. For every manual that you physically own there must exist online version that you could download.
+Okay, but what would be the engaging content here? How to automate downloading manuals so that you can get rid of the physical ones? That doesn't seem particularly interesting.
+
+My idea is to create a solution that:
+- answers questions regarding your household appliances
+- uses manuals you already own as a ground truth to answer the questions
+- shows original fragments of manuals if needed
+- (optional) runs on-demand using your resources
+
+That basically constitues for building the most popular use case for Large Language Models - RAG (Retrieval-Augmented Generation) process. 
+The topic of RAG processes is widely covered in online processes because it is very popular to implement.
+But I think this specific use case delivers interesting twists.
