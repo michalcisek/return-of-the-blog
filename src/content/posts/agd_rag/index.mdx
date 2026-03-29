@@ -33,12 +33,35 @@ For some reason I'm not able to memorise those 2 buttons. I swear to God I feel 
 So let's agree it might not be the wisest idea to blindly put those manuals in the garbage. Simple solution? Digitalize them. For every manual that you physically own there must exist online version that you could download.
 Okay, but what would be the engaging content here? How to automate downloading manuals so that you can get rid of the physical ones? That doesn't seem particularly interesting.
 
-My idea is to create a solution that:
+Instead, my idea is to create a solution that:
 - answers questions regarding your household appliances
 - uses manuals you already own as a ground truth to answer the questions
 - shows original fragments of manuals if needed
-- (optional) runs on-demand using your resources
 
-That basically constitues for building the most popular use case for Large Language Models - RAG (Retrieval-Augmented Generation) process. 
-The topic of RAG processes is widely covered in online processes because it is very popular to implement.
-But I think this specific use case delivers interesting twists.
+That basically describes the most common use for Large Language Models - RAG (Retrieval-Augmented Generation) process.
+In the internet you could find many resources that show how to implement such process.
+But most of them showcase rather straightforward implementations, while I believe my use case provides interesting twists and gotchas.
+
+# System requirements
+
+Let's specify some more general requirements about this system aside from "answering questions about the devices I own using manuals about them".
+
+a) First of all I want to keep support only for Polish and English manuals. Why? Because most documents are in English, but for few devices I only have Polish manuals.
+Additionally some manuals are multilingual and simply that would be useless to keep such duplicated information.
+
+b) Manuals are documents that are organised into logical sections, e.g. Error Codes or Cleaning sections.
+When we will load those documents into database we want to keep this structure, so that valid parts are loaded as context to LLMs.
+
+c) I want this solution to use open-source tools. I hope that's self-explanatory.
+
+d) In the final version I want this solution to work on-demand. It shouldn't use resources 24/7 because in real-world scenario I will use it periodically.
+So the inference engine should be loaded once I send the query and then shut off after being idle for some time.
+
+e) The system should show me as an attachment original chunks of manuals LLM used to answer the question. 
+Just in case I would need some more details e.g. specific symbols like button icons.
+
+# Architecture design
+
+## Ingestion pipeline
+
+## Inference pipeline
