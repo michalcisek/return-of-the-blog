@@ -6,7 +6,7 @@ ShowToc: true
 ShowReadingTime: true
 math: true
 cover:
-  image: "./IMG_3478.jpeg"
+  image: "./IMG_3955.PNG"
 ---
 
 import CenteredImage from '../../../components/CenteredImage.astro';
@@ -62,6 +62,69 @@ Just in case I would need some more details e.g. specific symbols like button ic
 
 # Architecture design
 
+The architecture will be divided into 2 parts: ingestion pipeline and inference pipeline.
+
+Ingestion pipeline will transform household appliances manuals to format that could be used to answer my questions.
+
+Inference pipeline will handle the logic to take my question and transform it into relevant and meaningful answer.
+
+
 ## Ingestion pipeline
+
+#### 1. Download all household appliances manuals
+
+In order to do it, I prepared CSV file with all my household appliances that contains 3 information: type of device (e.g. dishwasher), brand and model.
+Having this I simply asked Claude Code to download manuals for all my devices, keeping in mind that there needs to be at least either English or Polish (or both) version of the manual.
+That also required to properly set up access to a browser, not to run out of the tokens too fast.
+The process took surprisingly long but it finished successfully and ended up with ~70 manuals in PDF format.
+
+#### 2. Parse PDF documents into structured text chunks
+
+For this step I decided to use [Docling](https://github.com/docling-project/docling) that is open-source tool for processing documents.
+It has rich support for PDF documents and can extracts text items, tables and more importantly, preserves document hierarchy (chapters/sections). 
+
+#### 3. Keep only Polish and English content
+
+As mentioned earlier, the manuals might contain different languages and I only care about English and Polish chunks.
+In order to filter out unnecessary chunks I used language-detection model available in [fast-langdetect library](https://github.com/LlmKira/fast-langdetect).
+
+Once model detects neither Polish nor English chunk, it is removed from the document tree.
+
+One technical note - short text chunks (\20 characters) are kept because there is a higher chance for language-detection model error.
+
+#### 4. Prepare metadata for each text chunk
+
+
+3. **File metadata is resolved from the appliance catalog.**
+   - The source PDF filename is looked up in `lista AGD.csv` via `ApplianceCatalog`
+   - Extracted metadata: appliance name (PL/EN), brand, model, language
+   - This metadata is attached to every chunk produced from the file
+
+4. **The filtered document is split into chunks that respect its logical structure.**
+   - Docling's `HybridChunker` performs a two-pass algorithm: first splits oversized elements, then merges undersized ones
+   - Maximum chunk size is 512 tokens (aligned to the BGE-M3 tokenizer)
+   - Section hierarchy is preserved — chunks don't cross chapter/section boundaries
+   - Tables are kept as atomic units and never split
+   - Each chunk receives metadata: section path, page numbers, source file, appliance info, and a sequential chunk index
+
+5. **Chunks undergo a second language filter to catch any remaining foreign-language content.**
+   - Merged chunks (e.g., tables combined with surrounding text) may contain foreign text that passed the first filter
+   - Chunks detected as neither Polish nor English are discarded
+
+6. **Dense, sparse, and optionally ColBERT embeddings are generated for each chunk in a single forward pass.**
+   - Model: BGE-M3 (`BAAI/bge-m3`), which natively supports both Polish and English
+   - Dense vectors: 1024-dimensional, used for semantic similarity search
+   - Sparse vectors: lexical weight vectors, used for keyword-style BM25 matching
+   - ColBERT vectors: multi-vector token-level embeddings (1024-dim per token), used for late-interaction matching — disabled by default (`ENABLE_COLBERT = False`), requires collection re-creation when toggled
+   - Texts are processed in batches of 32
+
+7. **Chunks, embeddings, and metadata are upserted into the Qdrant vector database.**
+   - Collection `agd_manuals` stores dense, sparse, and optionally ColBERT vectors per point
+   - Point IDs are deterministic (UUID5 from `source_file:chunk_index`), enabling idempotent re-ingestion
+   - Keyword indexes are created on `source_file`, `language`, `brand`, `model`, and `appliance_name_pl` for efficient filtering
+   - An integer index on `chunk_index` supports neighbour chunk lookups during inference
+   - Already-ingested files are skipped by default (can be overridden with `--no-skip`)
+   - Points are upserted in batches of 100 (or 10 when ColBERT is enabled), with automatic batch-halving on payload-too-large errors
+
 
 ## Inference pipeline
