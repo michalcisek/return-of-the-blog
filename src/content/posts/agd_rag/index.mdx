@@ -44,9 +44,15 @@ But most of them showcase rather straightforward implementations, while I believ
 
 # System requirements
 
-Let's specify some more general requirements about this system aside from "answering questions about the devices I own using manuals about them".
+The general idea for RAG process is simple. In our case the scenario will look as follows:
+1. User asks a question about household appliance
+2. Some algorithm searches through all available manuals and select most relevant parts (relevant to the asked question)
+3. Relevant parts of manuals go to LLM as context alongside the question
+4. LLM answers the question based on the context
 
-a) First of all I want to keep support only for Polish and English manuals. Why? Because most documents are in English, but for few devices I only have Polish manuals.
+The application needs to perform these steps. On top of that I have few specific requirements:
+
+a) I want to keep support only for Polish and English manuals. Why? Because most documents are in English, but for few devices I only have Polish manuals.
 Additionally some manuals are multilingual and simply that would be useless to keep such duplicated information.
 
 b) Manuals are documents that are organised into logical sections, e.g. Error Codes or Cleaning sections.
@@ -71,28 +77,28 @@ Inference pipeline will handle the logic to take my question and transform it in
 
 ## Ingestion pipeline
 
-#### 1. Download all household appliances manuals
+### 1. Download all household appliances manuals
 
 In order to do it, I prepared CSV file with all my household appliances that contains 3 information: type of device (e.g. dishwasher), brand and model.
 Having this I simply asked Claude Code to download manuals for all my devices, keeping in mind that there needs to be at least either English or Polish (or both) version of the manual.
 That also required to properly set up access to a browser, not to run out of the tokens too fast.
 The process took surprisingly long but it finished successfully and ended up with ~70 manuals in PDF format.
 
-#### 2. Parse PDF documents into structured text chunks
+### 2. Parse PDF documents into structured text chunks
 
 For this step I decided to use [Docling](https://github.com/docling-project/docling) that is open-source tool for processing documents.
 It has rich support for PDF documents and can extracts text items, tables and more importantly, preserves document hierarchy (chapters/sections). 
 
-#### 3. Keep only Polish and English content
+### 3. Keep only Polish and English content
 
 As mentioned earlier, the manuals might contain different languages and I only care about English and Polish chunks.
 In order to filter out unnecessary chunks I used language-detection model available in [fast-langdetect library](https://github.com/LlmKira/fast-langdetect).
 
 Once model detects neither Polish nor English chunk, it is removed from the document tree.
 
-One technical note - short text chunks (\20 characters) are kept because there is a higher chance for language-detection model error.
+One technical note - short text chunks (\<20 characters) are kept because there is a higher chance for language-detection model error.
 
-#### 4. Prepare metadata for each text chunk
+### 4. Prepare metadata for each text chunk
 
 Each text chunk will be eventually loaded to a database to allow for lookup once user sends a query (more on that later).
 To effectively search through such chunks it's useful to provide some additional information about the chunk like:
@@ -102,79 +108,139 @@ To effectively search through such chunks it's useful to provide some additional
 - model
 - language
 
-#### 5. 
+### 5. Resize structured chunks to fit Embedding Model
 
-                                                                                                                                                                                                                                                                           
+This point is crucial for further understanding. 
+It wasn't mentioned earlier but the goal of processing these manuals' chunks is to end up with some kind of numerical representation.
+In simple terms we need numerical representation to be able to perform some mathematical operations, e.g. to tell how to text chunks are similar to each other.
+Embeddings are the answer for numerical representation that we look for.
+We will use some kind of Embedding Model that will transform text to numeric vector.
+These models are designed to have strict maximum input length, measured in tokens.
+The model that I'm using has this limit set to 512 tokens.
 
+As you can imagine our current text chunks that are split by logical structure of document can have very different length.
+Some sections are shorter, but most are probably longer than 512 tokens.
+That's why we need to resize them. We want to split oversized chunks and merge undersized ones.
+While splitting too large chunks seems pretty obvious, I believe that merging too small might sound counterintuitive.
 
+First, why to bother? Wouldn't it be easier to simply embed small chunks as they are?
+Not really - because small chunks, like single sentence or short paragraph produce weak embeddings.
+Simply put there's not enough semantic signal for embedding model to cling to.
 
+Secondly, wouldn't that lead to chunks that contain very different information from manual? For example two short chunks from end of one section and beginning of next one.
+Yes, that would suck indeed, but merging is constrained and it can only merge elements at the same level in the document hierarchy.
+So it won't merge content across section boundaries.
 
-  Chunk-level metadata (added in chunker.py:61-66):                                                                                                                                                                                                                                                                              
-  - chunk_index — sequential position within the document                                                                                                                                                                                                                                                                        
-  - section_path — heading hierarchy joined with > (e.g. "Safety > Electrical")                                                                                                                                                                                                                                                  
-  - page_numbers — sorted list of page numbers the chunk spans, extracted from docling provenance data                                                                                                                                                                                                                           
-                                                                                                         
+And the good news is that, while it sounds a bit complex, it is quite easy to perform using Docling's `HybridChunker` class.
 
+Plus, at this point we add additional metadata about each chunk that will be useful later:
+- section path
+- page numbers
+- sequential chunk index (that will be used later to figure out easily which chunks are "neighbours" for specific chunk)
 
-❯ wouldn't it be wiser to only splits oversized elements but keep undersized ones?                                                                                                                                                                                                                                               
-                                                                                                                                                                                                                                                                                                                               
-● It depends on the trade-off you're optimizing for. Let me check the current config first.                                                                                                                                                                                                                                      
-                                                                                                                                                                                                                                                                                                                               
-  Read 1 file (ctrl+o to expand)                                                                                                                                                                                                                                                                                                 
-                                                                                                                                                                                                                                                                                                                                 
-● It's a reasonable question, but I'd argue merge_peers=True is the better default here. Here's why:                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                                               
-  Against disabling merge (keeping current merge_peers=True):                                                                                                                                                                                                                                                                    
-  - Very small chunks (a single sentence, a short paragraph) produce weak embeddings — there's not enough semantic signal for BGE-M3 to latch onto, leading to noisy retrieval                                                                                                                                                   
-  - You'd end up with many more chunks, increasing storage and search latency in Qdrant                                                                                                                                                                                                                                          
-  - The LLM context gets filled with many tiny fragments instead of coherent passages, making answer synthesis harder                                                                                                                                                                                                            
-                                                                                                                                                                                                                                                                                                                                 
-  The merge is already constrained:                                                                                                                                                                                                                                                                                              
-  - It only merges peers — elements at the same level in the document hierarchy. It won't merge content across section boundaries.                                                                                                                                                                                               
-  - Merged chunks still respect the 512-token ceiling, so they can't grow unbounded.                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                                                 
-  When disabling merge would make sense:                                                                                                                                                                                                                                                                                         
-  - If your manuals had sections where unrelated items happen to be peers (e.g., a troubleshooting list where each bullet is an independent topic). In that case merging would dilute precision.                                                                                                                                 
-  - If you were doing very fine-grained retrieval where every sentence matters independently.                                                                                                                                                                                                                                    
-                                                                                                                                                                                                                                                                                                                                 
-  For appliance manuals — where sections tend to be topically coherent and users ask questions like "how do I descale the coffee machine" — merged peers typically give you a more complete, self-contained answer chunk. I'd keep merge_peers=True.                                                                             
-                                                                                                                                                                                                                                                                                                                                 
-  If you want to validate empirically, you could re-ingest one manual with merge_peers=False, compare chunk counts and average token lengths, and test a few queries side by side.                                                                                                                                               
-                                                                                                                                                                                    
+### 6. Create embeddings for each chunk
 
+As mentioned in previous step we want to convert text chunks into embeddings.
+In fact, in order to maximise chances for finding relevant manuals' pieces, we need two types of embeddings: dense and sparse.
+Dense embeddings are used for semantic similarity search. They usually have low dimension (128-1024) and most likely all values are non-zero.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+Sparse embeddings are used for exact keyword matching. For that reason they are high dimension (usually have size of the vocabulary) and only few values are non-zero.                                                                                                                                                                                  
 
-4. **The filtered document is split into chunks that respect its logical structure.**
-   - Docling's `HybridChunker` performs a two-pass algorithm: first splits oversized elements, then merges undersized ones
-   - Maximum chunk size is 512 tokens (aligned to the BGE-M3 tokenizer)
-   - Section hierarchy is preserved — chunks don't cross chapter/section boundaries
-   - Tables are kept as atomic units and never split
-   - Each chunk receives metadata: section path, page numbers, source file, appliance info, and a sequential chunk index
+We need those two types, because we want to do hybrid search i.e. combine semantic and term matching search.
 
-5. **Chunks undergo a second language filter to catch any remaining foreign-language content.**
-   - Merged chunks (e.g., tables combined with surrounding text) may contain foreign text that passed the first filter
-   - Chunks detected as neither Polish nor English are discarded
+For that purpose I used `BAAI/bge-m3` embedding model ([link](https://huggingface.co/BAAI/bge-m3)) as it's very popular choice, can produce both dense and sparse embeddings and supports both Polish and English.
+Dense embeddings are 1024-dimensional.
 
-6. **Dense, sparse, and optionally ColBERT embeddings are generated for each chunk in a single forward pass.**
-   - Model: BGE-M3 (`BAAI/bge-m3`), which natively supports both Polish and English
-   - Dense vectors: 1024-dimensional, used for semantic similarity search
-   - Sparse vectors: lexical weight vectors, used for keyword-style BM25 matching
-   - ColBERT vectors: multi-vector token-level embeddings (1024-dim per token), used for late-interaction matching — disabled by default (`ENABLE_COLBERT = False`), requires collection re-creation when toggled
-   - Texts are processed in batches of 32
+### 7. Load text chunks, embeddings and metadata to vector database
 
-7. **Chunks, embeddings, and metadata are upserted into the Qdrant vector database.**
-   - Collection `agd_manuals` stores dense, sparse, and optionally ColBERT vectors per point
-   - Point IDs are deterministic (UUID5 from `source_file:chunk_index`), enabling idempotent re-ingestion
-   - Keyword indexes are created on `source_file`, `language`, `brand`, `model`, and `appliance_name_pl` for efficient filtering
-   - An integer index on `chunk_index` supports neighbour chunk lookups during inference
-   - Already-ingested files are skipped by default (can be overridden with `--no-skip`)
-   - Points are upserted in batches of 100 (or 10 when ColBERT is enabled), with automatic batch-halving on payload-too-large errors
+The last step is to ingest all information that we worked on into Vector Database.
+There are a few good open-source options to choose from. I decided to go with [Qdrant](https://github.com/qdrant/qdrant).
+Why? Because it's one of the most popular vector databases and I didn't have a chance to work with it so far.
+I worked with extension of PostgreSQL made for working with vectors called `pgvector` but I didn't enjoy much.
+If you're interested about this topic I recommend you taking a look at [this article](https://alex-jacobs.com/posts/the-case-against-pgvector/). 
+
+One technical note: some metadata fields will be used quite frequently, for example source file, language, brand, model, appliance name.
+That's why I created keyword indexes based on it to allow efficient filtering.
 
 
 ## Inference pipeline
 
 
 
+1. **The user query's language is detected to determine the response language.**
+   - `fast-langdetect` classifies the query as Polish, English, or other
+   - Non-PL/EN queries default to English
+   - The detected language is passed downstream for language-aware filtering and response generation
 
+2. **The query is optionally rephrased or contextualized for better retrieval.**
+   - Controlled by `ENABLE_QUERY_REPHRASING` (default: on)
+   - Model: Gemini 2.0 Flash via OpenRouter (lightweight, fast)
+   - For follow-up questions with conversation history: the query is rewritten as a standalone question incorporating prior context
+   - For standalone queries: the query is rephrased to be clearer and more specific for retrieval
+   - The original query is preserved for NER detection; the rephrased version is used for retrieval and reranking
+
+3. **Named Entity Recognition identifies appliances mentioned in the query to narrow the search scope.**
+   - Three-stage cascading detection:
+     1. Regex matching for model numbers (pattern: `[A-Z0-9][A-Z0-9\-]{3,}[A-Z0-9]`, score: 1.0)
+     2. GLiNER-large-v2 NER model detects appliance-type entities (e.g., "washing machine", "dishwasher") with a 0.3 confidence threshold (score: from model)
+     3. Keyword substring fallback against all known appliance labels (score: 0.5)
+   - Regex and GLiNER results are combined; keyword fallback only runs if neither produced results
+   - Detected appliances are deduplicated by brand/model, keeping the highest score
+   - Detected appliances are resolved to their source PDF files via the appliance catalog
+   - A Qdrant filter is built to restrict search to only those files (OR logic across matches)
+   - Fallback: if no appliance is detected but previous conversation turns had detections, those are reused
+
+4. **The query is encoded into dense, sparse, and optionally ColBERT vectors using the same embedding model as ingestion.**
+   - BGE-M3 produces a 1024-dim dense vector, a sparse lexical vector, and optionally ColBERT multi-vectors for the query
+   - Using the same model for queries and documents ensures compatible vector spaces
+
+5. **Hybrid search retrieves candidate chunks using a confidence-aware dual-path strategy.**
+   - Two (or three, with ColBERT) parallel prefetch legs run in Qdrant, fused via Reciprocal Rank Fusion (RRF):
+     - Dense search: cosine similarity on the 1024-dim vectors
+     - Sparse search: lexical matching on the sparse vectors
+     - ColBERT search (optional): late-interaction MaxSim on multi-vectors
+   - Retrieval limit: 40 candidates per search leg
+   - NER confidence determines the search strategy:
+     - High confidence (max NER score >= 0.6): scoped retrieval only (filtered to detected appliance files)
+     - Low confidence or no detection: both scoped and global (unfiltered) searches run, results are merged and deduplicated
+   - Output: up to 40 unique candidate chunks with RRF-fused scores
+
+6. **A cross-encoder reranker rescores candidates and selects the most relevant chunks.**
+   - Model: BGE-Reranker-v2-m3 (`BAAI/bge-reranker-v2-m3`)
+   - Each candidate is jointly encoded with the query as a `[query, chunk_text]` pair
+   - The cross-encoder produces normalized relevance scores (0–1), which are more accurate than bi-encoder similarity
+   - Two selection modes (configurable via `RERANK_MODE`):
+     - `top_k` (default): return the best 5 results regardless of score
+     - `threshold`: return only results with score >= 0.5, capped at 5
+
+7. **Neighbouring chunks are fetched to provide additional context around top results.**
+   - For each reranked result, adjacent chunks (chunk_index ± 1) from the same source file are retrieved from Qdrant
+   - Neighbours already present in the top results are excluded
+   - Controlled by `FETCH_NEIGHBOURS` (default: on) and `NEIGHBOUR_WINDOW` (default: 1)
+
+8. **Retrieved chunks are formatted into a numbered context block for the LLM, enriched with neighbour context.**
+   - Each chunk is wrapped with its source metadata:
+     ```
+     [Source N: filename.pdf, Section: path, Pages: X, Y]
+     <preceding neighbour text, if available>
+     <chunk text>
+     <following neighbour text, if available>
+     ```
+   - Neighbour chunks are labeled as `[Preceding context]` / `[Following context]` but are not listed as separate sources
+   - A parallel list of source info dictionaries is built for citation rendering in the UI
+
+9. **The LLM generates an answer grounded in the retrieved context with source citations.**
+   - Model: Claude Sonnet 4.6 via OpenRouter API (through LlamaIndex)
+   - System prompt instructs the model to: answer in the query's language, base answers only on provided context, cite sources using `[Source N]`, and state when information is unavailable
+   - Conversation history (last 3 turns) is included in the prompt for multi-turn coherence
+   - Max output: 2048 tokens
+
+10. **The response is rendered in the Chainlit UI with citations and original PDF page images.**
+    - Rephrased query is displayed when it differs from the original
+    - Detected appliances are shown with NER confidence scores
+    - A note is shown when low NER confidence triggered a global fallback search
+    - Source citations list file, section path, page numbers, and relevance score
+    - Expandable side panels show the full retrieved text and metadata for each source
+    - Up to 5 original PDF pages are rendered as images using `pypdfium2` (deduplicated across sources)
 
 
 
