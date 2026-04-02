@@ -164,6 +164,53 @@ That's why I created keyword indexes based on it to allow efficient filtering.
 
 ## Inference pipeline
 
+### 1. Ask a query
+
+### 2. Rephrase the query using small LLM 
+
+### 3. Use Named Entity Recognition (NER) model to identify household appliance in the query
+
+### 4. Create enbeddings using query
+
+### 5. Use Hybrid Search to retrieve candidate chunks
+
+### 6. Use Reranker Model to select most relevant chunks from the candidates
+
+### 7. Fetch neighbouring chunks to provide additional context around top results
+
+### 8. Prepare context based on best chunks and pass it to LLM
+
+### 9. Return answer from LLM with citations and original PDF page images
+
+
+
+  ---                                                                                                                                                                                                                                                                                                                                           
+  2. Query Rephrasing                                                                                                                                                                                                                                                                                                                         
+                     
+  Where: src/inference/query_rephraser.py — uses Gemini 2.0 Flash (fast/cheap) with two modes:
+                                                                                                                                                                                                                                                                                                                                                
+  ┌─────────────┬─────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐                                                                                                                            
+  │  Scenario   │     Method      │                                                                                  What it does                                                                                  │                                                                                                                            
+  ├─────────────┼─────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤                                                                                                                            
+  │ No history  │ rephrase()      │ Rewrites a standalone query to be clearer and more specific for retrieval                                                                                                      │                                                                                                                          
+  ├─────────────┼─────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ Has history │ contextualize() │ Expands a follow-up question into a standalone question using conversation history (e.g. "What about the other model?" → "What is the warranty period for the Samsung WW90T?") │                                                                                                                            
+  └─────────────┴─────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘                                                                                                                            
+                                                                                                                                                                                                                                                                                                                                                
+  Advantages:                                                                                                                                                                                                                                                                                                                                   
+                                                                                                                                                                                                                                                                                                                                              
+  1. Better retrieval recall — vague or colloquial queries get sharpened before embedding + vector search, improving semantic match quality.                                                                                                                                                                                                    
+  2. Multi-turn conversation support — follow-ups that reference prior context (pronouns, "the other one", etc.) become self-contained, so retrieval doesn't miss because of missing context.                                                                                                                                                 
+  3. Better reranking — the cross-encoder reranker also scores against the rephrased query, so clearer queries → more accurate relevance scores.                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                                                                                
+  How it's wired in the pipeline (pipeline.py lines 73-82):                                                                                                                                                                                                                                                                                     
+                                                                                                                                                                                                                                                                                                                                                
+  - The rephrased query is used for retrieval (Step 3) and reranking (Step 4).                                                                                                                                                                                                                                                                  
+  - The original query is used for NER appliance detection (Step 2 — preserves exact model names) and LLM answer generation (Step 6 — keeps the user's natural phrasing).                                                                                                                                                                     
+  - Controlled by ENABLE_QUERY_REPHRASING = True in config.                                                                                                                                                                                                                                                                                     
+                                                                                                                                                                                                                                                                                                                                                
+  This split is smart: rephrasing helps the "search" side without distorting the "understanding" side (NER, final answer).   
+
 
 
 1. **The user query's language is detected to determine the response language.**
