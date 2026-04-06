@@ -6,10 +6,11 @@ ShowToc: true
 ShowReadingTime: true
 math: true
 cover:
-  image: "./IMG_3955.PNG"
+  image: "./agd_rag_main_image.png"
 ---
 
 import CenteredImage from '../../../components/CenteredImage.astro';
+import Step from '../../../components/Step.astro';
 
 
 > I don't know about you but I don't like to hoard things that "might be useful" in the unspecified future.
@@ -77,19 +78,25 @@ Inference pipeline will handle the logic to take my question and transform it in
 
 ## Ingestion pipeline
 
-### 1. Download all household appliances manuals
+<CenteredImage src={import('./IMG_2039_edited.png')} alt="image" maxWidth="400px" description="test1" />
+
+<Step n={1} title="Download all household appliances manuals">
 
 In order to do it, I prepared CSV file with all my household appliances that contains 3 information: type of device (e.g. dishwasher), brand and model.
 Having this I simply asked Claude Code to download manuals for all my devices, keeping in mind that there needs to be at least either English or Polish (or both) version of the manual.
 That also required to properly set up access to a browser, not to run out of the tokens too fast.
 The process took surprisingly long but it finished successfully and ended up with ~70 manuals in PDF format.
 
-### 2. Parse PDF documents into structured text chunks
+</Step>
+
+<Step n={2} title="Parse PDF documents into structured text chunks">
 
 For this step I decided to use [Docling](https://github.com/docling-project/docling) that is open-source tool for processing documents.
-It has rich support for PDF documents and can extracts text items, tables and more importantly, preserves document hierarchy (chapters/sections). 
+It has rich support for PDF documents and can extracts text items, tables and more importantly, preserves document hierarchy (chapters/sections).
 
-### 3. Keep only Polish and English content
+</Step>
+
+<Step n={3} title="Keep only Polish and English content">
 
 As mentioned earlier, the manuals might contain different languages and I only care about English and Polish chunks.
 In order to filter out unnecessary chunks I used language-detection model available in [fast-langdetect library](https://github.com/LlmKira/fast-langdetect).
@@ -98,7 +105,9 @@ Once model detects neither Polish nor English chunk, it is removed from the docu
 
 One technical note - short text chunks (\<20 characters) are kept because there is a higher chance for language-detection model error.
 
-### 4. Prepare metadata for each text chunk
+</Step>
+
+<Step n={4} title="Prepare metadata for each text chunk">
 
 Each text chunk will be eventually loaded to a database to allow for lookup once user sends a query (more on that later).
 To effectively search through such chunks it's useful to provide some additional information about the chunk like:
@@ -108,9 +117,11 @@ To effectively search through such chunks it's useful to provide some additional
 - model
 - language
 
-### 5. Resize structured chunks to fit Embedding Model
+</Step>
 
-This point is crucial for further understanding. 
+<Step n={5} title="Resize structured chunks to fit Embedding Model">
+
+This point is crucial for further understanding.
 It wasn't mentioned earlier but the goal of processing these manuals' chunks is to end up with some kind of numerical representation.
 In simple terms we need numerical representation to be able to perform some mathematical operations, e.g. to tell how to text chunks are similar to each other.
 Embeddings are the answer for numerical representation that we look for.
@@ -138,259 +149,207 @@ Plus, at this point we add additional metadata about each chunk that will be use
 - page numbers
 - sequential chunk index (that will be used later to figure out easily which chunks are "neighbours" for specific chunk)
 
-### 6. Create embeddings for each chunk
+</Step>
+
+<Step n={6} title="Create embeddings for each chunk">
 
 As mentioned in previous step we want to convert text chunks into embeddings.
 In fact, in order to maximise chances for finding relevant manuals' pieces, we need two types of embeddings: dense and sparse.
-Dense embeddings are used for semantic similarity search. They usually have low dimension (128-1024) and most likely all values are non-zero.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
-Sparse embeddings are used for exact keyword matching. For that reason they are high dimension (usually have size of the vocabulary) and only few values are non-zero.                                                                                                                                                                                  
+Dense embeddings are used for semantic similarity search. They usually have low dimension (128-1024) and most likely all values are non-zero.
+Sparse embeddings are used for exact keyword matching. For that reason they are high dimension (usually have size of the vocabulary) and only few values are non-zero.
 
 We need those two types, because we want to do hybrid search i.e. combine semantic and term matching search.
 
 For that purpose I used `BAAI/bge-m3` embedding model ([link](https://huggingface.co/BAAI/bge-m3)) as it's very popular choice, can produce both dense and sparse embeddings and supports both Polish and English.
 Dense embeddings are 1024-dimensional.
 
-### 7. Load text chunks, embeddings and metadata to vector database
+</Step>
+
+<Step n={7} title="Load text chunks, embeddings and metadata to vector database">
 
 The last step is to ingest all information that we worked on into Vector Database.
 There are a few good open-source options to choose from. I decided to go with [Qdrant](https://github.com/qdrant/qdrant).
 Why? Because it's one of the most popular vector databases and I didn't have a chance to work with it so far.
 I worked with extension of PostgreSQL made for working with vectors called `pgvector` but I didn't enjoy much.
-If you're interested about this topic I recommend you taking a look at [this article](https://alex-jacobs.com/posts/the-case-against-pgvector/). 
+If you're interested about this topic I recommend you taking a look at [this article](https://alex-jacobs.com/posts/the-case-against-pgvector/).
 
 One technical note: some metadata fields will be used quite frequently, for example source file, language, brand, model, appliance name.
 That's why I created keyword indexes based on it to allow efficient filtering.
 
+</Step>
+
 
 ## Inference pipeline
 
-### 1. Ask a query
+<CenteredImage src={import('./IMG_2038_edited.png')} alt="image" maxWidth="400px" description="test1" />
 
-### 2. Rephrase the query using small LLM 
+<Step n={1} title="Ask a query">
+</Step>
 
-### 3. Use Named Entity Recognition (NER) model to identify household appliance in the query
+<Step n={2} title="Rephrase the query using small LLM">
 
-### 4. Create enbeddings using query
+This step is optional but I use it in the final app.
+I noticed that sometimes my queries were too vague or colloquial so probably I would end up with non-optimal embedding for search.
+That's why small local Llama model is used to rephrase the query. It should improve retrieval recall (rephrased queries should result in embeddings of higher semantic value than original queries).
+It's a popular procedure used by biggest AI chatbots like Claude or ChatGPT.
 
-### 5. Use Hybrid Search to retrieve candidate chunks
+In our pipeline rephrased query is used for both retrieval and reranking (more on that later).
+It is also very useful for follow-up questions as in such cases we tend not to repeat some specifics that we provided in original query.
+Rephrasing allows to incorporate prior context.
 
-### 6. Use Reranker Model to select most relevant chunks from the candidates
+</Step>
 
-### 7. Fetch neighbouring chunks to provide additional context around top results
+<Step n={3} title="Use Named Entity Recognition (NER) model to identify household appliance in the query">
 
-### 8. Prepare context based on best chunks and pass it to LLM
+This is also optional step but I figured it would be nice to have some kind of routing mechanism before we start searching the right manual chunks.
+It's based on idea that in initial query almost certainly user would mention what devices are in his interest.
+So it seems reasonably to detect it and use this information to narrow down the search.
 
-### 9. Return answer from LLM with citations and original PDF page images
+For this purpose I'm using NER model - [GLiNER-large-v2](https://huggingface.co/urchade/gliner_large-v2).
+We take types of devices (not brand or name) from our initial CSV file and use it as entities we want to predict in the query.
+So we end up with scores (0 to 1) assigned by NER model for each device.
 
+From this point we need to carefully consider our strategy because this step might become our single point of failure.
 
+We can imagine scenario in which all types of devices get low scores but one receives it very high.
+This tells us that with high confidence we can assume user asks about this specific household appliance and we can narrow down search space.
+So the strategy would be to simply take the device with highest score.
 
-  ---                                                                                                                                                                                                                                                                                                                                           
-  2. Query Rephrasing                                                                                                                                                                                                                                                                                                                         
-                     
-  Where: src/inference/query_rephraser.py — uses Gemini 2.0 Flash (fast/cheap) with two modes:
-                                                                                                                                                                                                                                                                                                                                                
-  ┌─────────────┬─────────────────┬────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐                                                                                                                            
-  │  Scenario   │     Method      │                                                                                  What it does                                                                                  │                                                                                                                            
-  ├─────────────┼─────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤                                                                                                                            
-  │ No history  │ rephrase()      │ Rewrites a standalone query to be clearer and more specific for retrieval                                                                                                      │                                                                                                                          
-  ├─────────────┼─────────────────┼────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-  │ Has history │ contextualize() │ Expands a follow-up question into a standalone question using conversation history (e.g. "What about the other model?" → "What is the warranty period for the Samsung WW90T?") │                                                                                                                            
-  └─────────────┴─────────────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘                                                                                                                            
-                                                                                                                                                                                                                                                                                                                                                
-  Advantages:                                                                                                                                                                                                                                                                                                                                   
-                                                                                                                                                                                                                                                                                                                                              
-  1. Better retrieval recall — vague or colloquial queries get sharpened before embedding + vector search, improving semantic match quality.                                                                                                                                                                                                    
-  2. Multi-turn conversation support — follow-ups that reference prior context (pronouns, "the other one", etc.) become self-contained, so retrieval doesn't miss because of missing context.                                                                                                                                                 
-  3. Better reranking — the cross-encoder reranker also scores against the rephrased query, so clearer queries → more accurate relevance scores.                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                                                                                                
-  How it's wired in the pipeline (pipeline.py lines 73-82):                                                                                                                                                                                                                                                                                     
-                                                                                                                                                                                                                                                                                                                                                
-  - The rephrased query is used for retrieval (Step 3) and reranking (Step 4).                                                                                                                                                                                                                                                                  
-  - The original query is used for NER appliance detection (Step 2 — preserves exact model names) and LLM answer generation (Step 6 — keeps the user's natural phrasing).                                                                                                                                                                     
-  - Controlled by ENABLE_QUERY_REPHRASING = True in config.                                                                                                                                                                                                                                                                                     
-                                                                                                                                                                                                                                                                                                                                                
-  This split is smart: rephrasing helps the "search" side without distorting the "understanding" side (NER, final answer).   
+On the other side, we can imagine scenario where model scores are uniformly distributed for all devices.
+What should we do? Still take the highest score? Or top N?
 
+I think it's quite clear that using such NER routing is rather aggressive approach and might lead to pulling context for LLM that is useless and irrelevant to the question.
 
+That's why I decided to introduce a minimal threshold for which we assume NER model detection is strong enough.
+If it's not the case (if all cases are below the threshold), we use global search (use chunks from all manuals saved in Vector Database).
+In practice it seems threshold equal to 0.6 works well.
 
-1. **The user query's language is detected to determine the response language.**
-   - `fast-langdetect` classifies the query as Polish, English, or other
-   - Non-PL/EN queries default to English
-   - The detected language is passed downstream for language-aware filtering and response generation
+As a side note: I use original query, not rephrased one, for Named Entity Recognition.
+The thinking is that it's best to use a query with original, unmodified intent. 
 
-2. **The query is optionally rephrased or contextualized for better retrieval.**
-   - Controlled by `ENABLE_QUERY_REPHRASING` (default: on)
-   - Model: Gemini 2.0 Flash via OpenRouter (lightweight, fast)
-   - For follow-up questions with conversation history: the query is rewritten as a standalone question incorporating prior context
-   - For standalone queries: the query is rephrased to be clearer and more specific for retrieval
-   - The original query is preserved for NER detection; the rephrased version is used for retrieval and reranking
+</Step>
 
-3. **Named Entity Recognition identifies appliances mentioned in the query to narrow the search scope.**
-   - Three-stage cascading detection:
-     1. Regex matching for model numbers (pattern: `[A-Z0-9][A-Z0-9\-]{3,}[A-Z0-9]`, score: 1.0)
-     2. GLiNER-large-v2 NER model detects appliance-type entities (e.g., "washing machine", "dishwasher") with a 0.3 confidence threshold (score: from model)
-     3. Keyword substring fallback against all known appliance labels (score: 0.5)
-   - Regex and GLiNER results are combined; keyword fallback only runs if neither produced results
-   - Detected appliances are deduplicated by brand/model, keeping the highest score
-   - Detected appliances are resolved to their source PDF files via the appliance catalog
-   - A Qdrant filter is built to restrict search to only those files (OR logic across matches)
-   - Fallback: if no appliance is detected but previous conversation turns had detections, those are reused
+<Step n={4} title="Create embeddings using query">
 
-4. **The query is encoded into dense, sparse, and optionally ColBERT vectors using the same embedding model as ingestion.**
-   - BGE-M3 produces a 1024-dim dense vector, a sparse lexical vector, and optionally ColBERT multi-vectors for the query
-   - Using the same model for queries and documents ensures compatible vector spaces
+Here we simply encode the query into dense and sparse vectors.
+We use the same Embedding Model as for ingestion - `BGE-M3`. It produces a 1024-dim dense vector and a sparse lexical vector.
+Using the same model for queries and documents ensures compatible vector spaces.
 
-5. **Hybrid search retrieves candidate chunks using a confidence-aware dual-path strategy.**
-   - Two (or three, with ColBERT) parallel prefetch legs run in Qdrant, fused via Reciprocal Rank Fusion (RRF):
-     - Dense search: cosine similarity on the 1024-dim vectors
-     - Sparse search: lexical matching on the sparse vectors
-     - ColBERT search (optional): late-interaction MaxSim on multi-vectors
-   - Retrieval limit: 40 candidates per search leg
-   - NER confidence determines the search strategy:
-     - High confidence (max NER score >= 0.6): scoped retrieval only (filtered to detected appliance files)
-     - Low confidence or no detection: both scoped and global (unfiltered) searches run, results are merged and deduplicated
-   - Output: up to 40 unique candidate chunks with RRF-fused scores
+</Step>
 
-6. **A cross-encoder reranker rescores candidates and selects the most relevant chunks.**
-   - Model: BGE-Reranker-v2-m3 (`BAAI/bge-reranker-v2-m3`)
-   - Each candidate is jointly encoded with the query as a `[query, chunk_text]` pair
-   - The cross-encoder produces normalized relevance scores (0–1), which are more accurate than bi-encoder similarity
-   - Two selection modes (configurable via `RERANK_MODE`):
-     - `top_k` (default): return the best 5 results regardless of score
-     - `threshold`: return only results with score >= 0.5, capped at 5
+<Step n={5} title="Use Hybrid Search to retrieve candidate chunks">
 
-7. **Neighbouring chunks are fetched to provide additional context around top results.**
-   - For each reranked result, adjacent chunks (chunk_index ± 1) from the same source file are retrieved from Qdrant
-   - Neighbours already present in the top results are excluded
-   - Controlled by `FETCH_NEIGHBOURS` (default: on) and `NEIGHBOUR_WINDOW` (default: 1)
+In this step we run 2 parallel jobs in Qdrant:
+  - dense search: using cosine similarity between query and chunks vectors
+  - sparse search: using lexical matching on the sparse vectors
 
-8. **Retrieved chunks are formatted into a numbered context block for the LLM, enriched with neighbour context.**
-   - Each chunk is wrapped with its source metadata:
-     ```
-     [Source N: filename.pdf, Section: path, Pages: X, Y]
-     <preceding neighbour text, if available>
-     <chunk text>
-     <following neighbour text, if available>
-     ```
-   - Neighbour chunks are labeled as `[Preceding context]` / `[Following context]` but are not listed as separate sources
-   - A parallel list of source info dictionaries is built for citation rendering in the UI
+Each search returns a ranking of best chunks that should be relevant to the query.
+The rankings are merged into one using Reciprocal Rank Fusion (RRF) algorithm.
 
-9. **The LLM generates an answer grounded in the retrieved context with source citations.**
-   - Model: Claude Sonnet 4.6 via OpenRouter API (through LlamaIndex)
-   - System prompt instructs the model to: answer in the query's language, base answers only on provided context, cite sources using `[Source N]`, and state when information is unavailable
-   - Conversation history (last 3 turns) is included in the prompt for multi-turn coherence
-   - Max output: 2048 tokens
+So as an output we get top N best candidates from joint ranking. I set N to 40 best candidates.
 
-10. **The response is rendered in the Chainlit UI with citations and original PDF page images.**
-    - Rephrased query is displayed when it differs from the original
-    - Detected appliances are shown with NER confidence scores
-    - A note is shown when low NER confidence triggered a global fallback search
-    - Source citations list file, section path, page numbers, and relevance score
-    - Expandable side panels show the full retrieved text and metadata for each source
-    - Up to 5 original PDF pages are rendered as images using `pypdfium2` (deduplicated across sources)
+</Step>
+
+<Step n={6} title="Use Reranker Model to select most relevant chunks from the candidates">
+
+It's very popular to use second stage assessment of best candidates.
+In first stage we use rather fast algorithms to retrieve large selection of candidates.
+During second stage we want to use more sophisticated (and therefore often slower) methods to narrow it down to few most prominent candidates.
+For such purpose there exists a family of Reranker models. They process query and candidate chunk together to compute a precise score.
+Compared for example to cosine similarity, they are able to capture more nuanced relationships.
+
+Here I'm using [BGE-Reranker-v2-m3](https://huggingface.co/BAAI/bge-reranker-v2-m3) model.
+Two configurable selection modes are available:
+  - top `k` (default) - returns the best `k` results regardless of score
+  - threshold - returns only results with score >= X
+
+</Step>
+
+<Step n={7} title="Fetch neighbouring chunks to provide additional context around top results">
+
+Given that current Large Language Models continously extend their available context window, it seems reasonable to provide additional information around top results.
+So for each reranked result, neigbouring chunks from the same source file are retrieved from Qdrant.
+
+It's configurable setting but I retrieve only the closest neighbours (`chunk_index` ± 1).
+
+Of course neighbours that are already present in top results are excluded.
+
+</Step>
+
+<Step n={8} title="Prepare context based on best chunks and pass it to LLM">
 
 
+Retrieved chunks are formatted into a numbered context block for the LLM, enriched with neighbour context.
+Each chunk is wrapped with its source metadata:
+```
+[Source N: filename.pdf, Section: path, Pages: X, Y]
+<preceding neighbour text, if available>
+<chunk text>
+<following neighbour text, if available>
+```
+Neighbour chunks are labeled as `[Preceding context]` / `[Following context]` but are not listed as separate sources
+
+</Step>
+
+<Step n={9} title="Return answer from LLM with citations and original PDF page images">
+
+The last step is to send the message to LLM and receive the answer.
+System prompt instructs the model to: answer in the query's language, base answers only on provided context, cite sources using `[Source N]`, and state when information is unavailable.
+
+For most of my tests I was using Claude Sonnet 4.6 via OpenRouter API. But using smaller, self-hosted model like LLama also worked perfectly fine.
+
+I also added the support for keeping conversation history, so that it's included in the prompt in order to allow multi-turn conversation (follow-up questions to the original one).
+
+</Step>
+
+## User Interface
+
+I prepared 2 ways of interacting with this system.
+
+First is for local testing and debugging and it was done using [Chainlit](https://chainlit.io/).
+I choose it because it integrates easily and many things just work out of the box.
+Here are example of elements that I added to chatbot functionalities:
+- displaying rephrased query when it differs from original
+- displaying NER model confidence score (and a note when its low threshold triggers a global search)
+- attaching up to 5 original PDF pages, rendered as images using `pypdfium2` library
 
 
+Second way was for remote usage when the app is deployed on my server.
+Currently my server doesn't have as much resources as my PC.
+That's why I mentioned earlier that final version shouldn't run as a service non-stop because it would be a waste of resources.
 
+Many aspects could be considered here to make this system as slim as possible, yet functional.
+The most notable example is selection of models I use in both pipelines.
+Right now they need few GB of VRAM to be operational.
+Certainly this could be optimised. 
+Actually I think that could be a great idea for next article - how to squeeze out as much as you can from your resources to run locally most capable LLMs.
+Anyway, that's not the consideration for this article. This few GB of VRAM is good enough for me to proceed.
+Especially if it's not going to be used 24/7.
 
+So the idea is to interact with it using Telegram Bot.
+Whole solution will be based on 3 components:
 
+1. Inference pipeline wrapped up as a service
 
+- use [FastAPI](https://fastapi.tiangolo.com/) for this purpose with `/query` endpoint
+- use background thread that tracks `last_request_time`; This information is used to shut down the service after configurable `IDLE_TIMEOUT` parameter (set to 2 hours)
+- it's managed by systemd service so the bot can start it with systemctl start
+- Qdrant is added as as systemd dependency (Qdrant must be running for retrieval)
 
+2. Telegram Bot
 
+- it always stays on
+- it's lightweight (uses ~5MB RAM)
+- on message received:
+  - check if inference service is running                                                                                                                                                                                                                                           
+  - wait for health check (`/health` endpoint)                                                                                                                                                                                                                                                                                  
+  - POST question to `/query` endpoint
+  - return answer + sources to Telegram chat  
+- it's based on `python-telegram-bot` package. To cofnigure it you need to create new bot and use token assigned to it 
+- models take ~10-15 seconds to cold start. It is transparent to user - bot sends "Loading models..." message and then polls `/health` endpoint
 
+3. Qdrant — starts/stops with inference                                                                                                                                                                                                                                                                                        
 
+- it's tied to inference service via systemd dependency (starts/stops with inference)
 
-
-
-
-
-
-  Current State                                                                                                                                                                                                                                                                                                                  
-                                                                                                                                                                                                                                                                                                                                 
-  The inference pipeline (src/inference/) is already well-separated from ingestion. The key challenge is:                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                                                                 
-  - 3 local GPU models (~3.4 GB VRAM): BGE-M3, GLiNER, bge-reranker — take ~10-15s cold start                                                                                                                                                                                                                                    
-  - Qdrant must be running for retrieval                                                                                                                                                                                                                                                                                       
-  - 2 API-based models (OpenRouter): no local cost, but need the pipeline running to call them                                                                                                                                                                                                                                   
-                                                                                                                                                                                                                                                                                                                                 
-  Proposed Architecture
-                                                                                                                                                                                                                                                                                                                                 
-  ┌─────────────────────┐       ┌──────────────────────────────┐                                                                                                                                                                                                                                                               
-  │  Telegram Bot       │       │  Inference Service (FastAPI)  │                                                                                                                                                                                                                                                                
-  │  (always-on, ~5MB)  │──────▶│  GPU models + Qdrant client   │
-  │                     │ HTTP  │  idle timer → self-shutdown    │                                                                                                                                                                                                                                                               
-  └─────────────────────┘       └──────────────────────────────┘                                                                                                                                                                                                                                                                 
-           │                              │                                                                                                                                                                                                                                                                                      
-           │ starts via systemd           │ depends on                                                                                                                                                                                                                                                                           
-           │ if not running               ▼                                                                                                                                                                                                                                                                                      
-           │                    ┌──────────────────┐                                                                                                                                                                                                                                                                           
-           └───────────────────▶│  Qdrant (Docker)  │                                                                                                                                                                                                                                                                            
-                                └──────────────────┘                                                                                                                                                                                                                                                                           
-                                                                                                                                                                                                                                                                                                                                 
-  Three components:                                                                                                                                                                                                                                                                                                            
-                                                                                                                                                                                                                                                                                                                                 
-  1. Inference Service (FastAPI) — starts/stops on demand                                                                                                                                                                                                                                                                        
-  
-  - Wrap InferencePipeline in a FastAPI app with a /query endpoint                                                                                                                                                                                                                                                               
-  - Background thread tracks last_request_time; shuts down after IDLE_TIMEOUT (configurable, e.g. 2h)                                                                                                                                                                                                                          
-  - Managed by a systemd service so the bot can start it with systemctl start                                                                                                                                                                                                                                                    
-  - Qdrant as a systemd dependency (Requires=docker-qdrant.service)                                                                                                                                                                                                                                                              
-                                                                                                                                                                                                                                                                                                                                 
-  2. Telegram Bot — always-on, lightweight                                                                                                                                                                                                                                                                                       
-                                                                                                                                                                                                                                                                                                                                 
-  - Tiny process (~5MB RAM, no GPU)                                                                                                                                                                                                                                                                                              
-  - On message received:
-    a. Check if inference service is running → if not, systemctl start agd-inference                                                                                                                                                                                                                                             
-    b. Wait for health check (/health endpoint)                                                                                                                                                                                                                                                                                  
-    c. POST query to http://localhost:8000/query
-    d. Return answer + sources to Telegram chat                                                                                                                                                                                                                                                                                  
-  - Can also expose /status commands to check if inference is up                                                                                                                                                                                                                                                               
-                                                                                                                                                                                                                                                                                                                                 
-  3. Qdrant — starts/stops with inference                                                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                                                                 
-  - Tied to inference service via systemd dependency                                                                                                                                                                                                                                                                             
-  - Or kept always-on (it's lightweight, ~50MB idle RAM)                                                                                                                                                                                                                                                                       
-                                                                                                                                                                                                                                                                                                                                 
-  Key Design Decisions
-                                                                                                                                                                                                                                                                                                                                 
-  ┌───────────────────────────────┬───────────────────────────────────────────────────────────┬────────────────────────────────────────────────────────────────────────────────────┐                                                                                                                                             
-  │           Decision            │                      Recommendation                       │                                        Why                                         │
-  ├───────────────────────────────┼───────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤                                                                                                                                             
-  │ Service manager               │ systemd                                                   │ Already on your server, socket activation possible, dependency management built-in │                                                                                                                                           
-  ├───────────────────────────────┼───────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤
-  │ Idle shutdown                 │ In-process timer                                          │ Simpler than external watchdog; FastAPI lifespan event + background task           │                                                                                                                                             
-  ├───────────────────────────────┼───────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤                                                                                                                                             
-  │ Bot ↔ Inference               │ HTTP (localhost)                                          │ Simple, debuggable, no message queue overhead for occasional use                   │                                                                                                                                             
-  │ communication                 │                                                           │                                                                                    │                                                                                                                                             
-  ├───────────────────────────────┼───────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤                                                                                                                                           
-  │ Cold start handling           │ Bot sends "Loading models..." to user, then polls /health │ Transparent UX, 10-15s wait is acceptable for occasional use                       │                                                                                                                                             
-  ├───────────────────────────────┼───────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤                                                                                                                                             
-  │ Qdrant lifecycle              │ Starts with inference (systemd BindsTo=)                  │ No point running it alone; saves ~50MB when idle                                   │
-  ├───────────────────────────────┼───────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────────────────────────────────┤                                                                                                                                             
-  │ Conversation history          │ SQLite in bot (persistent across restarts)                │ Inference service is stateless; bot owns session state                             │                                                                                                                                           
-  └───────────────────────────────┴───────────────────────────────────────────────────────────┴────────────────────────────────────────────────────────────────────────────────────┘                                                                                                                                             
-                                                                                                                                                                                                                                                                                                                               
-  What Changes in the Codebase                                                                                                                                                                                                                                                                                                   
-                                                                                                                                                                                                                                                                                                                               
-  Minimal refactoring needed — the pipeline is already cleanly separated:                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                                                               
-  1. New: api.py — FastAPI wrapper around InferencePipeline                                                                                                                                                                                                                                                                      
-    - POST /query (query, conversation_history) → answer + sources                                                                                                                                                                                                                                                             
-    - GET /health → readiness probe                                                                                                                                                                                                                                                                                              
-    - Idle shutdown background task                                                                                                                                                                                                                                                                                              
-  2. New: telegram_bot.py — python-telegram-bot or aiogram                                                                                                                                                                                                                                                                       
-    - Message handler → HTTP call to inference service                                                                                                                                                                                                                                                                           
-    - Service lifecycle management (start/health-check/timeout messaging)                                                                                                                                                                                                                                                      
-    - Session/history storage (SQLite)                                                                                                                                                                                                                                                                                           
-  3. Existing src/inference/pipeline.py — no changes needed, used as-is                                                                                                                                                                                                                                                          
-  4. New: systemd unit files — agd-inference.service, agd-telegram-bot.service                                                                                                                                                                                                                                                   
-  5. app.py (Chainlit) — stays as-is for local/dev use, not deployed                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                                                 
-  Cold Start Optimization (Optional)                                                                                                                                                                                                                                                                                             
-                                                                                                                                                                                                                                                                                                                                 
-  If 10-15s feels too slow:                                                                                                                                                                                                                                                                                                      
-  - Preload embedder lazily: GLiNER + Reranker load at startup (~5s), BGE-M3 loads on first query (~5-8s more)                                                                                                                                                                                                                 
-  - Keep warm period: After shutdown timer fires, keep models in RAM for another N minutes before actually exiting (two-tier timeout)                                                                                                                                                                                            
-  - systemd socket activation: Start service on first TCP connection to port 8000 (saves the bot from managing lifecycle)                                                                                                                                                                                                      
-                                                                                                                             
+                                                                                                                          
