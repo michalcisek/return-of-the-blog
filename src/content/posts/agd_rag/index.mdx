@@ -1,7 +1,7 @@
 ---
-date: '2026-04-07T13:35:13+01:00'
+date: '2026-04-10T13:35:13+01:00'
 draft: false
-title: 'How can you ?'
+title: 'How to become paper minimalist?'
 ShowToc: true
 ShowReadingTime: true
 math: true
@@ -160,13 +160,17 @@ Plus, at this point we add additional metadata about each chunk that will be use
 <Step n={5} title="Create embeddings for each chunk">
 
 As mentioned in previous step we want to convert text chunks into embeddings.
-In fact, in order to maximise chances for finding relevant manuals' pieces, we need two types of embeddings: dense and sparse.
-Dense embeddings are used for semantic similarity search. They usually have low dimension (128-1024) and most likely all values are non-zero.
-Sparse embeddings are used for exact keyword matching. For that reason they are high dimension (usually have size of the vocabulary) and only few values are non-zero.
+You could state that embeddings are dense vectors - meaning the majority of the values aren't 0.
+Such embeddings are used for semantic retrieval (or embedding-based retrieval). Semantic basically means we aim to find chunks that have close meaning with the query.
 
-We need those two types, because we want to do hybrid search i.e. combine semantic and term matching search.
+In order to maximise our chances for finding relevant manuals' pieces, we will also create second type of vectors: sparse vectors. These are vectors that are 0 everywhere except one value of 1.
+We are going to use these vectors for lexical retrieval (or term-based retrieval).
+This approach is based on using keywords for finding relevant chunks - e.g. return all chunks that contain "dishwasher" keyword.
+The actual algorithm for retrieving the right chunks is a bit more complicated and is based on modification of TF-IDF (term frequency-inverse document frequency) statistic.
 
-For that purpose I used `BAAI/bge-m3` embedding model ([link](https://huggingface.co/BAAI/bge-m3)) as it's very popular choice, can produce both dense and sparse embeddings and supports both Polish and English.
+We need these two types of vectors in order to do hybrid search i.e combine results of term and embedding based search.
+
+For that purpose I used `BAAI/bge-m3` embedding model ([link](https://huggingface.co/BAAI/bge-m3)) as it's very popular choice, can produce both dense and sparse vectors and supports both Polish and English.
 Dense embeddings are 1024-dimensional.
 
 </Step>
@@ -398,3 +402,10 @@ In *Figure 5* you can check example conversation using Telegram bot.
 
 # Conclusions
 
+The manuals landed in the trash. There is no going back.
+
+Some things might need additional adjustment or development, like creating a procedure to adding new manuals or cutting down resource usage.
+
+But it seems like it should serve its purpose properly and cover vast majority of my use cases.
+
+In worst case scenario I have a clean TV stand and digital versions as a backup 😎.
