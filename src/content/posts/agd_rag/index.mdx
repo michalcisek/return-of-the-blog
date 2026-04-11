@@ -1,0 +1,411 @@
+---
+date: '2026-04-10T13:35:13+01:00'
+draft: false
+title: 'How to become paper minimalist?'
+ShowToc: true
+ShowReadingTime: true
+math: true
+cover:
+  image: "./agd_rag_main_image.png"
+---
+
+import CenteredImage from '../../../components/CenteredImage.astro';
+import Step from '../../../components/Step.astro';
+import TextBlock from '../../../components/TextBlock.astro';
+
+> I don't know about you but I don't like to hoard things that "might be useful" in the unspecified future.
+> It's probably a generational thing. Our parents used to keep different sort of items because simply they were raised when there was not much around (thank you communism and centrally planned economy).
+> And right now, contrary to our parents' attitude, we try to keep our life and surroundings minimalist. 
+> 
+> At least that's my take on it.
+> So once I see that I collect something too excessively, I try to solve the problem.
+> And I've recently noticed I have a pretty decent collection of manuals for different devices that "might be useful" but currently just occupy my TV stand (Figure 1).
+> Let's see what we can do about it.
+
+<CenteredImage src={import('./tv_stand.JPG')} alt="image" maxWidth="400px" description="Figure 1: my beautiful collection of very important manuals that shall be kept at all costs" />
+
+# Problem definition
+
+What's the actual problem here that stops me from simply throwing it away? The problem is that those documents actually might be useful in the unspecified future 😅.
+
+Once your induction hob displays some specific error it might be easier to look it up in manual you already own instead of first trying to find its exact model and then googling it.
+Or for example in my case, every few weeks I need to run self-cleaning program for my dishwasher. To do so you need to click simultaneously two buttons for few seconds.
+For some reason I'm not able to memorise those 2 buttons. I swear to God I feel like I'm clicking the right buttons, but it doesn't work until I check it in the manual.
+
+So let's agree it might not be the wisest idea to blindly put those manuals in the garbage. Simple solution? Digitalize them. For every manual that you physically own there must exist online version that you could download.
+Okay, but what would be the engaging content here? How to automate downloading manuals so that you can get rid of the physical ones? That doesn't seem particularly interesting.
+
+Instead, my idea is to create a solution that:
+<div style="margin-left: 2rem;">   
+- answers your questions regarding your household appliances
+- uses manuals you already own as a ground truth to answer these questions
+- shows original fragments of manuals if needed
+</div>
+
+That basically describes very common use for Large Language Models - RAG (Retrieval-Augmented Generation) process.
+On the internet you could find many resources that show how to build such processes.
+But most of them showcase rather straightforward implementations, while I believe my use case provides interesting twists and gotchas.
+
+# System requirements
+
+The general idea for RAG process is simple. In our case the scenario will look as follows:
+1. User asks a question about household appliance
+2. Some algorithm searches through all available manuals and select most relevant parts (relevant to asked question)
+3. Relevant parts of manuals go to LLM as context alongside the question
+4. LLM answers the question based on the context
+
+The application needs to perform these steps. On top of that I have a few specific requirements:
+<div style="margin-left: 2rem;">   
+a) I want to keep support only for Polish and English manuals. Why? Because most documents are in English, but for a few devices I only have Polish manuals.
+Additionally some manuals are multilingual and it would be useless to keep such duplicated information.
+
+b) Manuals are documents that are organised into logical sections, e.g. Error Codes or Cleaning sections.
+When we will load those documents into database we want to keep this structure, so that valid parts are loaded as context to LLMs.
+
+c) I want this solution to use open-source tools. I hope that's self-explanatory.
+
+d) In the final version I want this solution to work on-demand. It shouldn't use resources 24/7 because in real-world scenario I will use it periodically.
+So the inference engine should be loaded once I send the query and then shut off after being idle for some time.
+
+e) The system should show me as an attachment original chunks of manuals LLM used to answer the question. 
+Just in case I would need some more details e.g. specific symbols like button icons.
+</div>
+
+# Architecture design
+
+The architecture will be divided into 3 parts: ingestion pipeline, inference pipeline and user interface.
+
+Ingestion pipeline will transform household appliances manuals to format that could be used to answer my questions (*Figure 2*).
+
+Inference pipeline will handle the logic to take my question and transform it into relevant and meaningful answer (*Figure 3*).
+
+On top of inference pipeline there will be some kind of user interface to send queries and retrieve answers.
+
+## Ingestion pipeline
+
+<CenteredImage src={import('./IMG_2039_edited.png')} alt="image" maxWidth="400px" description="Figure 2: sketch of ingestion pipeline" border />
+
+<Step n={0} title="Download all household appliances manuals">
+
+This is the pre-requisite without which we can't go on.
+In order to do it, I prepared CSV file with all my household appliances that contains 3 pieces of information: type of device (e.g. dishwasher), brand and model.
+Having this I simply asked Claude Code to download manuals for all my devices, keeping in mind that there needs to be at least either English or Polish (or both) version of the manual.
+That also required to properly set up access to a browser, not to run out of the tokens too fast.
+The process took surprisingly long but it finished successfully and ended up with ~70 manuals in PDF format.
+
+</Step>
+
+<Step n={1} title="Parse PDF documents into structured text chunks">
+
+For this step I decided to use [Docling](https://github.com/docling-project/docling) that is an open-source tool for processing documents.
+It has rich support for PDF documents and can extract text items, tables and more importantly, preserves document hierarchy (chapters/sections).
+
+</Step>
+
+<Step n={2} title="Keep only Polish and English content">
+
+As mentioned earlier, the manuals might contain different languages and I only care about English and Polish chunks.
+In order to filter out unnecessary chunks I used language-detection model available in [fast-langdetect library](https://github.com/LlmKira/fast-langdetect).
+
+Once model detects neither Polish nor English chunk, it removes it from the document tree.
+
+One technical note - short text chunks (\<20 characters) are kept because there is a higher chance for language-detection model error.
+
+</Step>
+
+<Step n={3} title="Prepare metadata for each text chunk">
+
+Each text chunk will be eventually loaded to a database to allow for lookup once user sends a query (more on that later).
+To effectively search through such chunks it's useful to provide some additional information about the chunk like:
+- source file the chunk comes from
+- household appliance name
+- brand
+- model
+- language
+
+</Step>
+
+<Step n={4} title="Resize structured chunks to fit Embedding Model">
+
+This point is crucial for further understanding.
+It wasn't mentioned earlier but the goal of processing these manuals' chunks is to end up with some kind of numerical representation.
+In simple terms we need numerical representation to be able to perform some mathematical operations, e.g. to tell how text chunks are similar to each other.
+Embeddings are the answer for numerical representation that we look for.
+We will use some kind of Embedding Model that will transform text to numeric vectors.
+These models are designed to have strict maximum input length, measured in tokens.
+The model that I'm using has this limit set to 512 tokens.
+
+As you can imagine our current text chunks that are split by logical structure of document can have very different length.
+Some sections are shorter, but most are probably longer than 512 tokens.
+That's why we need to resize them. We want to split oversized chunks and merge undersized ones.
+While splitting too large chunks seems pretty obvious, I believe that merging too small might sound counterintuitive.
+
+First, why to bother? Wouldn't it be easier to simply embed small chunks as they are?
+Not really - because small chunks, like single sentence or short paragraph produce weak embeddings.
+Simply put there's not enough semantic signal for embedding model to cling to.
+
+Secondly, wouldn't that lead to chunks that contain very different information from manual? For example two short chunks from end of one section and beginning of next one.
+Yes, that would suck indeed, but merging is constrained and it can only merge elements at the same level in the document hierarchy.
+So it won't merge content across section boundaries.
+
+And the good news is that, while it sounds a bit complex, it is quite easy to perform using Docling's `HybridChunker` class.
+
+Plus, at this point we add additional metadata about each chunk that will be useful later:
+- section path
+- page numbers
+- sequential chunk index (that will be used later to figure out easily which chunks are "neighbours" for specific chunk)
+
+</Step>
+
+<Step n={5} title="Create embeddings for each chunk">
+
+As mentioned in previous step we want to convert text chunks into embeddings.
+You could state that embeddings are dense vectors - meaning the majority of the values aren't 0.
+Such embeddings are used for semantic retrieval (or embedding-based retrieval). Semantic basically means we aim to find chunks that have close meaning with the query.
+
+In order to maximise our chances for finding relevant manuals' pieces, we will also create second type of vectors: sparse vectors. These are vectors that are 0 everywhere except one value of 1.
+We are going to use these vectors for lexical retrieval (or term-based retrieval).
+This approach is based on using keywords for finding relevant chunks - e.g. return all chunks that contain "dishwasher" keyword.
+The actual algorithm for retrieving the right chunks is a bit more complicated and is based on modification of TF-IDF (term frequency-inverse document frequency) statistic.
+
+We need these two types of vectors in order to do hybrid search i.e combine results of term and embedding based search.
+
+For that purpose I used `BAAI/bge-m3` embedding model ([link](https://huggingface.co/BAAI/bge-m3)) as it's very popular choice, can produce both dense and sparse vectors and supports both Polish and English.
+Dense embeddings are 1024-dimensional.
+
+</Step>
+
+<Step n={6} title="Load text chunks, embeddings and metadata to vector database">
+
+The last step is to ingest all information that we worked on into Vector Database.
+There are a few good open-source options to choose from. I decided to go with [Qdrant](https://github.com/qdrant/qdrant).
+Why? Because it's one of the most popular vector databases and I didn't have a chance to work with it so far.
+I worked with an extension of PostgreSQL made for working with vectors called `pgvector` but I haven't enjoyed it much.
+If you're interested about this topic I recommend you taking a look at [this article](https://alex-jacobs.com/posts/the-case-against-pgvector/).
+
+One technical note: some metadata fields will be used quite frequently, for example source file, language, brand, model, appliance name.
+That's why I created keyword indexes based on it to allow efficient filtering.
+
+</Step>
+
+
+## Inference pipeline
+
+<CenteredImage src={import('./IMG_2038_edited.png')} alt="image" maxWidth="400px" description="Figure 3: sketch of inference pipeline" border />
+
+<Step n={0} title="Take the query asked by the user">
+
+I hope it's self-explanatory.
+
+</Step>
+
+<Step n={1} title="Rephrase the query using small LLM">
+
+This step is optional and wasn't part of the pipeline at the beginning but it proved to be helpful.
+I noticed that sometimes my queries are too vague or colloquial so probably I would end up with non-optimal embeddings for search.
+That's why small local Llama model is used to rephrase the query. It should improve retrieval recall as rephrased queries should result in embeddings of higher semantic value than original queries.
+It's a popular procedure used by biggest AI chatbots like Claude or ChatGPT.
+
+In our pipeline rephrased query is used for both retrieval and reranking (more on that later).
+It is also very useful for follow-up questions as in such cases we tend not to repeat some specifics that we provided in original query.
+Rephrasing allows to incorporate prior context.
+
+</Step>
+
+<Step n={2} title="Use Named Entity Recognition (NER) model to identify household appliances in the query">
+
+This is also optional step but I figured it would be nice to have some kind of routing mechanism before we start searching the right manual chunks.
+It's based on idea that in initial query almost certainly user would mention what devices are in his interest.
+So it seems reasonable to detect it and use this information to narrow down the search.
+
+For this purpose I'm using NER model - [GLiNER-large-v2](https://huggingface.co/urchade/gliner_large-v2).
+We take types of devices (not brand or name) from our initial CSV file and use it as entities we want to predict in the query.
+So we end up with scores (0 to 1) assigned by NER model for each device.
+
+From this point we need to carefully consider our strategy because this step might become our single point of failure.
+
+We can imagine scenario in which all types of devices get low scores but one receives it very high.
+This tells us that with high confidence we can assume user asks about this specific household appliance and we can narrow down search space.
+So the strategy would be to simply take the device with highest score.
+
+On the other side, we can imagine scenario where model scores are uniformly distributed for all devices.
+What should we do? Still take the highest score? Or top N?
+
+I think it's quite clear that using such NER routing is rather aggressive approach and might lead to pulling context for LLM that is useless and irrelevant to the question.
+
+That's why I decided to introduce a minimal threshold for which we assume NER model detection is strong enough.
+If it's not the case (if all cases are below the threshold), we use global search (use chunks from all manuals saved in Vector Database).
+In practice it seems threshold equal to 0.6 works well.
+
+As a side note: I use original query, not rephrased one, for Named Entity Recognition.
+The thinking is that it's best to use a query with original, unmodified intent. 
+
+</Step>
+
+<Step n={3} title="Create embeddings using query">
+
+Here we simply encode the query into dense and sparse vectors.
+We use the same Embedding Model as for ingestion - `BGE-M3`. It produces a 1024-dim dense vector and a sparse lexical vector.
+Using the same model for queries and documents ensures compatible vector spaces.
+
+</Step>
+
+<Step n={4} title="Use Hybrid Search to retrieve candidate chunks">
+
+In this step we run 2 parallel jobs in Qdrant:
+  - dense search: using cosine similarity between query and chunks vectors
+  - sparse search: using lexical matching on the sparse vectors
+
+Each search returns a ranking of best chunks that should be relevant to the query.
+The rankings are merged into one using Reciprocal Rank Fusion (RRF) algorithm.
+
+So as an output we get top N best candidates from joint ranking. I set N to 40 best candidates.
+
+</Step>
+
+<Step n={5} title="Use Reranker Model to select most relevant chunks from the candidates">
+
+It's very popular to use second stage assessment of best candidates.
+In first stage we use rather fast algorithms to retrieve large selection of candidates.
+During second stage we want to use more sophisticated (and therefore often slower) methods to narrow it down to few most prominent candidates.
+For such purpose there exists a family of Reranker models. They process query and candidate chunk together to compute a precise score.
+Compared for example to cosine similarity, they are able to capture more nuanced relationships.
+
+Here I'm using [BGE-Reranker-v2-m3](https://huggingface.co/BAAI/bge-reranker-v2-m3) model.
+Two configurable selection modes are available:
+  - top `k` (default) - returns the best `k` results regardless of score
+  - threshold - returns only results with score >= X
+
+</Step>
+
+<Step n={6} title="Fetch neighbouring chunks to provide additional context around top results">
+
+Given that current Large Language Models continuously extend their available context window, it seems reasonable to provide additional information around top results.
+So for each reranked result, neighbouring chunks from the same source file are retrieved from Qdrant.
+
+It's configurable setting but I retrieve only the closest neighbours (`chunk_index` ± 1).
+
+Of course neighbours that are already present in top results are excluded.
+
+</Step>
+
+<Step n={7} title="Prepare context based on best chunks and pass it to LLM">
+
+
+Retrieved chunks are formatted into a numbered context block for the LLM, enriched with neighbour context.
+Each chunk is wrapped with its source metadata:
+```
+[Source N: filename.pdf, Section: path, Pages: X, Y]
+<preceding neighbour text, if available>
+<chunk text>
+<following neighbour text, if available>
+```
+
+</Step>
+
+<Step n={8} title="Return answer from LLM with citations and original PDF page images">
+
+The last step is to send the message to LLM and receive the answer.
+System prompt instructs the model to: answer in the query's language, base answers only on provided context, cite sources using `[Source N]`, and state when information is unavailable.
+
+For most of my tests I was using Claude Sonnet 4.6 via OpenRouter API. But using smaller, self-hosted model like LLama also worked perfectly fine.
+
+I also added the support for keeping conversation history, so that it's included in the prompt in order to allow multi-turn conversation (follow-up questions to the original one).
+
+</Step>
+
+## User Interface
+
+I prepared 2 ways of interacting with this system.
+
+<TextBlock label="Option 1" title="Local service">    
+
+First is for local testing and debugging and it was done using [Chainlit](https://chainlit.io/).
+I chose it because it integrates easily and many things just work out of the box.
+Here are examples of elements that I added to chatbot functionalities:
+<div style="margin-left: 2rem;">   
+- displaying rephrased query when it differs from original
+- displaying NER model confidence score (and a note when its low threshold triggers a global search)
+- attaching up to 5 original PDF pages, rendered as images using `pypdfium2` library
+</div>
+
+*Figure 4* shows example conversation done using this option.
+
+<figure style="text-align: center; margin: 1.25rem 0;">                                                                                                                                                                                                                                                                        
+  <div style="display: flex; gap: 1rem; justify-content: center;">                                                                                                                                                                                                                                                             
+    <CenteredImage src={import('./local_app_1.png')} alt="image" maxWidth="400px" />                                                                                                                                                                                                                                           
+    <CenteredImage src={import('./local_app_2.png')} alt="image" maxWidth="400px" />                                                                                                                                                                                                                                           
+  </div>                                                                                                                                                                                                                                                                                                                     
+  <figcaption style="margin-top: 0.5rem; font-size: 0.9em; color: #666; font-style: italic;">                                                                                                                                                                                                                                  
+    Figure 4: screenshots from the conversation in Chainlit UI                                                                                                                                                                                                                                                                                                   
+  </figcaption>
+</figure>   
+
+</TextBlock>
+
+<TextBlock label="Option 2" title="Hosted service">    
+
+Second way was for remote usage when the app is deployed on my server.
+Currently my server doesn't have as many resources as my PC.
+That's why I mentioned earlier that final version shouldn't run as a service non-stop because it would be a waste of precious resources.
+
+Many aspects could be considered here to make this system as slim as possible, yet functional.
+The most notable example is selection of models I use in both pipelines.
+Right now they need few GB of VRAM to be operational.
+Certainly this could be optimised. 
+Actually I think that could be a great idea for next article - how to squeeze out as much as you can from your resources to run locally most capable LLMs.
+Anyway, that's not the consideration for this article. This few GB of VRAM is good enough for me to proceed.
+Especially if it's not going to be used 24/7.
+
+The idea here is to interact with inference pipeline using Telegram Bot.
+Whole solution will be based on 3 components:
+
+1. Inference pipeline wrapped up as a service
+<div style="margin-left: 2rem;">   
+- use [FastAPI](https://fastapi.tiangolo.com/) for this purpose with `/query` endpoint
+- use background thread that tracks `last_request_time`; This information is used to shut down the service after configurable `IDLE_TIMEOUT` parameter (set to 2 hours)
+- it's managed by systemd service so the bot can start it with systemctl start
+- Qdrant is added as as systemd dependency (Qdrant must be running for retrieval)
+</div>
+
+2. Telegram Bot
+<div style="margin-left: 2rem;">                                                                                                                                                                                                                                                                                               
+- it always stays on
+- it's lightweight (uses ~5MB RAM)
+- on message received:
+  - check if inference service is running                                                                                                                                                                                                                                           
+  - wait for health check (`/health` endpoint)                                                                                                                                                                                                                                                                                  
+  - POST question to `/query` endpoint
+  - return answer + sources to Telegram chat  
+- it's based on `python-telegram-bot` package. To configure it you need to create new bot and use token assigned to it 
+- models take ~10-15 seconds to cold start. This is transparent to user - bot sends "Loading models..." message and then polls `/health` endpoint
+</div>
+
+3. Qdrant vector database                                                                                                                                                                                                                                                                                        
+<div style="margin-left: 2rem;">   
+- it's tied to inference service via systemd dependency (starts/stops with inference)
+</div>
+
+In *Figure 5* you can check example conversation using Telegram bot. 
+
+<figure style="text-align: center; margin: 1.25rem 0;">                                                                                                                                                                                                                                                                        
+  <div style="display: flex; gap: 1rem; justify-content: center;">                                                                                                                                                                                                                                                             
+    <CenteredImage src={import('./telegram_app_1.PNG')} alt="image" maxWidth="400px" />                                                                                                                                                                                                                                           
+    <CenteredImage src={import('./telegram_app_2.PNG')} alt="image" maxWidth="400px" />                                                                                                                                                                                                                                           
+  </div>                                                                                                                                                                                                                                                                                                                     
+  <figcaption style="margin-top: 0.5rem; font-size: 0.9em; color: #666; font-style: italic;">                                                                                                                                                                                                                                  
+    Figure 5: screenshots from the conversation via Telegram bot                                                                                                                                                                                                                                                                                                   
+  </figcaption>
+</figure>   
+
+</TextBlock>
+
+# Conclusions
+
+The manuals landed in the trash. There is no going back.
+
+Some things might need additional adjustment or development, like creating a procedure for adding new manuals or cutting down resource usage.
+
+But it seems like it should serve its purpose properly and cover vast majority of my use cases.
+
+In worst case scenario I have a clean TV stand and digital versions as a backup 😎.

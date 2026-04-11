@@ -4,9 +4,10 @@ interface Props {
   alt?: string;
   maxWidth?: string;
   description?: string;
+  border?: boolean;
 }
 
-const { src, alt = 'image', maxWidth = '400px', description } = Astro.props;
+const { src, alt = 'image', maxWidth = '400px', description, border = false } = Astro.props;
 
 let resolvedSrc: string;
 if (typeof src === 'string') {
@@ -26,7 +27,7 @@ if (typeof src === 'string') {
     <img
       src={resolvedSrc}
       alt={alt}
-      style={`max-width:min(${maxWidth}, 100%);width:100%;height:auto;cursor:zoom-in;display:inline-block;vertical-align:middle`}
+      style={`max-width:min(${maxWidth}, 100%);width:100%;height:auto;cursor:zoom-in;display:inline-block;vertical-align:middle${border ? ';border:1px solid var(--text)' : ''}`}
       loading="lazy"
     />
   </a>

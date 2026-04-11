@@ -78,6 +78,7 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft))
     const CONNECTION_DIST = 150;
     const MOUSE_RADIUS = 200;
     const BASE_SPEED = 0.3;
+    const LIGHTNING_RADIUS = 180;
 
     interface Particle {
       x: number;
@@ -98,7 +99,8 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft))
       return {
         particle: dark ? 'rgba(201, 209, 217, 0.5)' : 'rgba(36, 41, 46, 0.35)',
         line: dark ? 'rgba(201, 209, 217,' : 'rgba(36, 41, 46,',
-        mouseGlow: dark ? 'rgba(88, 166, 255,' : 'rgba(9, 105, 218,',
+        mouseGlow: dark ? 'rgba(255, 200, 50,' : 'rgba(255, 80, 0,',
+        lightning: dark ? '#ffc832' : '#ff5000',
       };
     }
 
@@ -118,6 +120,25 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft))
           radius: Math.random() * 2 + 1,
         });
       }
+    }
+
+    function distToSegment(px: number, py: number, x1: number, y1: number, x2: number, y2: number) {
+      const dx = x2 - x1, dy = y2 - y1;
+      const lenSq = dx * dx + dy * dy;
+      if (lenSq === 0) return Math.hypot(px - x1, py - y1);
+      const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / lenSq));
+      return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+    }
+
+    function lightningPoints(x1: number, y1: number, x2: number, y2: number, offset: number, minLen: number): number[][] {
+      const dx = x2 - x1, dy = y2 - y1;
+      const len = Math.hypot(dx, dy);
+      if (len < minLen) return [];
+      const px = -dy / len, py = dx / len;
+      const disp = (Math.random() - 0.5) * offset;
+      const mx = (x1 + x2) / 2 + px * disp;
+      const my = (y1 + y2) / 2 + py * disp;
+      return [...lightningPoints(x1, y1, mx, my, offset * 0.55, minLen), [mx, my], ...lightningPoints(mx, my, x2, y2, offset * 0.55, minLen)];
     }
 
     function draw() {
@@ -166,13 +187,37 @@ const posts = (await getCollection('posts', ({ data }) => !data.draft))
           const dist = Math.sqrt(dx * dx + dy * dy);
 
           if (dist < CONNECTION_DIST) {
-            const opacity = (1 - dist / CONNECTION_DIST) * 0.15;
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = colors.line + opacity + ')';
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
+            const ax = particles[i].x, ay = particles[i].y;
+            const bx = particles[j].x, by = particles[j].y;
+            const edgeDist = distToSegment(mouse.x, mouse.y, ax, ay, bx, by);
+
+            if (edgeDist < LIGHTNING_RADIUS) {
+              const intensity = 1 - edgeDist / LIGHTNING_RADIUS;
+              const opacity = (1 - dist / CONNECTION_DIST) * (0.3 + intensity * 0.55);
+              const offset = intensity * 18;
+
+              const interior = lightningPoints(ax, ay, bx, by, offset, 7);
+              const pts = [[ax, ay], ...interior, [bx, by]];
+
+              ctx.save();
+              ctx.shadowColor = colors.lightning;
+              ctx.shadowBlur = intensity * 14;
+              ctx.strokeStyle = colors.mouseGlow + opacity + ')';
+              ctx.lineWidth = 0.5 + intensity * 1.2;
+              ctx.beginPath();
+              ctx.moveTo(pts[0][0], pts[0][1]);
+              for (let k = 1; k < pts.length; k++) ctx.lineTo(pts[k][0], pts[k][1]);
+              ctx.stroke();
+              ctx.restore();
+            } else {
+              const opacity = (1 - dist / CONNECTION_DIST) * 0.15;
+              ctx.beginPath();
+              ctx.moveTo(ax, ay);
+              ctx.lineTo(bx, by);
+              ctx.strokeStyle = colors.line + opacity + ')';
+              ctx.lineWidth = 0.5;
+              ctx.stroke();
+            }
           }
         }
       }

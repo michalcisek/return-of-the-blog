@@ -289,7 +289,11 @@ img {
 }
 
 .article-content li {
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.article-content ul li::marker {
+  color: var(--text-secondary);
 }
 
 .article-content blockquote {
