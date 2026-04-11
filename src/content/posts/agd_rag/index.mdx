@@ -19,7 +19,7 @@ import TextBlock from '../../../components/TextBlock.astro';
 > 
 > At least that's my take on it.
 > So once I see that I collect something too excessively, I try to solve the problem.
-> And I've recently noticed I have a pretty decent collection of manuals for different devices that "might be useful" but currently just occuppy my TV stand (Figure 1).
+> And I've recently noticed I have a pretty decent collection of manuals for different devices that "might be useful" but currently just occupy my TV stand (Figure 1).
 > Let's see what we can do about it.
 
 <CenteredImage src={import('./tv_stand.JPG')} alt="image" maxWidth="400px" description="Figure 1: my beautiful collection of very important manuals that shall be kept at all costs" />
@@ -28,7 +28,7 @@ import TextBlock from '../../../components/TextBlock.astro';
 
 What's the actual problem here that stops me from simply throwing it away? The problem is that those documents actually might be useful in the unspecified future 😅.
 
-Once your induction hop displays some specific error it might be easier to look it up in manual you already own instead of first trying to find its exact model and then googling it.
+Once your induction hob displays some specific error it might be easier to look it up in manual you already own instead of first trying to find its exact model and then googling it.
 Or for example in my case, every few weeks I need to run self-cleaning program for my dishwasher. To do so you need to click simultaneously two buttons for few seconds.
 For some reason I'm not able to memorise those 2 buttons. I swear to God I feel like I'm clicking the right buttons, but it doesn't work until I check it in the manual.
 
@@ -43,7 +43,7 @@ Instead, my idea is to create a solution that:
 </div>
 
 That basically describes very common use for Large Language Models - RAG (Retrieval-Augmented Generation) process.
-In the internet you could find many resources that show how to build such processes.
+On the internet you could find many resources that show how to build such processes.
 But most of them showcase rather straightforward implementations, while I believe my use case provides interesting twists and gotchas.
 
 # System requirements
@@ -54,9 +54,9 @@ The general idea for RAG process is simple. In our case the scenario will look a
 3. Relevant parts of manuals go to LLM as context alongside the question
 4. LLM answers the question based on the context
 
-The application needs to perform these steps. On top of that I have few specific requirements:
+The application needs to perform these steps. On top of that I have a few specific requirements:
 <div style="margin-left: 2rem;">   
-a) I want to keep support only for Polish and English manuals. Why? Because most documents are in English, but for few devices I only have Polish manuals.
+a) I want to keep support only for Polish and English manuals. Why? Because most documents are in English, but for a few devices I only have Polish manuals.
 Additionally some manuals are multilingual and it would be useless to keep such duplicated information.
 
 b) Manuals are documents that are organised into logical sections, e.g. Error Codes or Cleaning sections.
@@ -88,7 +88,7 @@ On top of inference pipeline there will be some kind of user interface to send q
 <Step n={0} title="Download all household appliances manuals">
 
 This is the pre-requisite without which we can't go on.
-In order to do it, I prepared CSV file with all my household appliances that contains 3 information: type of device (e.g. dishwasher), brand and model.
+In order to do it, I prepared CSV file with all my household appliances that contains 3 pieces of information: type of device (e.g. dishwasher), brand and model.
 Having this I simply asked Claude Code to download manuals for all my devices, keeping in mind that there needs to be at least either English or Polish (or both) version of the manual.
 That also required to properly set up access to a browser, not to run out of the tokens too fast.
 The process took surprisingly long but it finished successfully and ended up with ~70 manuals in PDF format.
@@ -97,8 +97,8 @@ The process took surprisingly long but it finished successfully and ended up wit
 
 <Step n={1} title="Parse PDF documents into structured text chunks">
 
-For this step I decided to use [Docling](https://github.com/docling-project/docling) that is open-source tool for processing documents.
-It has rich support for PDF documents and can extracts text items, tables and more importantly, preserves document hierarchy (chapters/sections).
+For this step I decided to use [Docling](https://github.com/docling-project/docling) that is an open-source tool for processing documents.
+It has rich support for PDF documents and can extract text items, tables and more importantly, preserves document hierarchy (chapters/sections).
 
 </Step>
 
@@ -180,7 +180,7 @@ Dense embeddings are 1024-dimensional.
 The last step is to ingest all information that we worked on into Vector Database.
 There are a few good open-source options to choose from. I decided to go with [Qdrant](https://github.com/qdrant/qdrant).
 Why? Because it's one of the most popular vector databases and I didn't have a chance to work with it so far.
-I worked with extension of PostgreSQL made for working with vectors called `pgvector` but I haven't enjoyed it much.
+I worked with an extension of PostgreSQL made for working with vectors called `pgvector` but I haven't enjoyed it much.
 If you're interested about this topic I recommend you taking a look at [this article](https://alex-jacobs.com/posts/the-case-against-pgvector/).
 
 One technical note: some metadata fields will be used quite frequently, for example source file, language, brand, model, appliance name.
@@ -201,7 +201,7 @@ I hope it's self-explanatory.
 
 <Step n={1} title="Rephrase the query using small LLM">
 
-This step is optional and wasn't the part of pipeline at the beginning but it proved to be helpful.
+This step is optional and wasn't part of the pipeline at the beginning but it proved to be helpful.
 I noticed that sometimes my queries are too vague or colloquial so probably I would end up with non-optimal embeddings for search.
 That's why small local Llama model is used to rephrase the query. It should improve retrieval recall as rephrased queries should result in embeddings of higher semantic value than original queries.
 It's a popular procedure used by biggest AI chatbots like Claude or ChatGPT.
@@ -216,7 +216,7 @@ Rephrasing allows to incorporate prior context.
 
 This is also optional step but I figured it would be nice to have some kind of routing mechanism before we start searching the right manual chunks.
 It's based on idea that in initial query almost certainly user would mention what devices are in his interest.
-So it seems reasonably to detect it and use this information to narrow down the search.
+So it seems reasonable to detect it and use this information to narrow down the search.
 
 For this purpose I'm using NER model - [GLiNER-large-v2](https://huggingface.co/urchade/gliner_large-v2).
 We take types of devices (not brand or name) from our initial CSV file and use it as entities we want to predict in the query.
@@ -280,8 +280,8 @@ Two configurable selection modes are available:
 
 <Step n={6} title="Fetch neighbouring chunks to provide additional context around top results">
 
-Given that current Large Language Models continously extend their available context window, it seems reasonable to provide additional information around top results.
-So for each reranked result, neigbouring chunks from the same source file are retrieved from Qdrant.
+Given that current Large Language Models continuously extend their available context window, it seems reasonable to provide additional information around top results.
+So for each reranked result, neighbouring chunks from the same source file are retrieved from Qdrant.
 
 It's configurable setting but I retrieve only the closest neighbours (`chunk_index` ± 1).
 
@@ -321,8 +321,8 @@ I prepared 2 ways of interacting with this system.
 <TextBlock label="Option 1" title="Local service">    
 
 First is for local testing and debugging and it was done using [Chainlit](https://chainlit.io/).
-I choose it because it integrates easily and many things just work out of the box.
-Here are example of elements that I added to chatbot functionalities:
+I chose it because it integrates easily and many things just work out of the box.
+Here are examples of elements that I added to chatbot functionalities:
 <div style="margin-left: 2rem;">   
 - displaying rephrased query when it differs from original
 - displaying NER model confidence score (and a note when its low threshold triggers a global search)
@@ -346,7 +346,7 @@ Here are example of elements that I added to chatbot functionalities:
 <TextBlock label="Option 2" title="Hosted service">    
 
 Second way was for remote usage when the app is deployed on my server.
-Currently my server doesn't have as much resources as my PC.
+Currently my server doesn't have as many resources as my PC.
 That's why I mentioned earlier that final version shouldn't run as a service non-stop because it would be a waste of precious resources.
 
 Many aspects could be considered here to make this system as slim as possible, yet functional.
@@ -377,7 +377,7 @@ Whole solution will be based on 3 components:
   - wait for health check (`/health` endpoint)                                                                                                                                                                                                                                                                                  
   - POST question to `/query` endpoint
   - return answer + sources to Telegram chat  
-- it's based on `python-telegram-bot` package. To cofnigure it you need to create new bot and use token assigned to it 
+- it's based on `python-telegram-bot` package. To configure it you need to create new bot and use token assigned to it 
 - models take ~10-15 seconds to cold start. This is transparent to user - bot sends "Loading models..." message and then polls `/health` endpoint
 </div>
 
@@ -404,7 +404,7 @@ In *Figure 5* you can check example conversation using Telegram bot.
 
 The manuals landed in the trash. There is no going back.
 
-Some things might need additional adjustment or development, like creating a procedure to adding new manuals or cutting down resource usage.
+Some things might need additional adjustment or development, like creating a procedure for adding new manuals or cutting down resource usage.
 
 But it seems like it should serve its purpose properly and cover vast majority of my use cases.
 
