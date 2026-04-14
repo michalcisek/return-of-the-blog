@@ -59,7 +59,7 @@ For Lotto it's rather straightforward to get the numbers. The game has been stud
 $\binom{49}{6} = 13\ 983\ 816$ - this tells you how many possible 6-numbers draws there are out of 49 numbers. Out of all these possible outcomes only one represents winning set of numbers, so the probability is:
 
 $$
-P(Lotto\ jackpot) = \frac{1}{13\ 983\ 816} = 0.000007151\\%
+P(Lotto\ jackpot) = \frac{1}{13\ 983\ 816} = 0.000007151\%
 $$
 
 The general formula to calculate the probability of drawing exactly $k$ numbers is:
@@ -72,7 +72,7 @@ For the expected value of a single ticket we have to know the payouts. You win m
 To calculate expected value we reuse the formula provided above and the payouts information:
 
 $$
-EV = 24\*P(3) + 187.24\*P(4) + 5807.11\*P(5) + 2000000\*P(6) = 0.85\ PLN
+EV = 24 \cdot P(3) + 187.24 \cdot P(4) + 5807.11 \cdot P(5) + 2000000 \cdot P(6) = 0.85\ PLN
 $$
 
 Your total expected gross payout is 0.85 PLN, but you pay 3 PLN for the ticket, so that leaves you with net expected value:
@@ -151,7 +151,7 @@ It sounds nice, but we need to compare it to the network hashrate, i.e. the hash
 For recent months it's about 1 ZH/s (zettahashes). Zetta prefix means $10^{21}$. So our probability is:
 
 $$
-P(single\ block) = \frac{Your\ device\ hashrate}{Network\ hashrate} = \frac{10^6}{10^{21}} = 10^{-15} = 0.0000000000001\\%
+P(single\ block) = \frac{Your\ device\ hashrate}{Network\ hashrate} = \frac{10^6}{10^{21}} = 10^{-15} = 0.0000000000001\%
 $$
 
 
@@ -160,7 +160,7 @@ Reward is 3.125 BTC (let's skip transaction fees that would increase it). That i
 1 kWh costs about 1 PLN. That's 0.00017 PLN for the average time of finding a single block (10 minutes).
 
 $$
-NEV(single\ block) = (0.0000000000001\\% * 1\ 030\ 000\ PLN) - 0.00017\ PLN = \newline
+NEV(single\ block) = (0.0000000000001\% \times 1\ 030\ 000\ PLN) - 0.00017\ PLN = \newline
 = -0.00016999897\ PLN
 $$
 
@@ -173,7 +173,7 @@ The prize for finding a block changes roughly every four years. To be precise, i
 As for the costs we have to include here both electricity and device cost. The former would be 87.6 PLN and the latter 150 PLN. Spoiler alert: the expected payout is still close to zero, so we will again see only the costs part in the expected payout calculations:
 
 $$
-NEV(in\ 10\ years) = 5.26*10^{-10} * 1.5625 * 330000 - (87.6+150) = \newline
+NEV(in\ 10\ years) = 5.26 \times 10^{-10} \times 1.5625 \times 330000 - (87.6+150) = \newline
 = -237.5997\ PLN
 $$
 
